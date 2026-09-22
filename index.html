@@ -123,7 +123,7 @@
     <div id="start-screen" class="flex flex-col items-center justify-center w-full flex-grow p-4 md:p-8">
         <div class="bg-white p-6 md:p-10 rounded-3xl shadow-2xl border-4 border-blue-400 text-center max-w-xl w-full pop-in overflow-y-auto max-h-full flex flex-col">
             <h1 class="text-4xl md:text-5xl font-black text-blue-600 mb-2">新南英語大冒險</h1>
-            <p class="text-xl text-gray-500 mb-8 font-bold">五年級英語挑戰賽 (內建 100 題精選題庫)</p>
+            <p class="text-xl text-gray-500 mb-8 font-bold">五年級英語挑戰賽 (內建 92 題精選題庫)</p>
             
             <div class="space-y-4 mb-8 text-left">
                 <div>
@@ -601,906 +601,836 @@
         }
 
         /* ========================================================
-           優化三：100 題完整內建題庫 (依據 題庫 資料夾範圍精確打造)
+           優化三：92 題精選題庫 (已排除審查建議之 8 題：3、22、24、27、32、49、66、83)
            ======================================================== */
         const questionBank = [
-          {
-                    "q": "哪一個單字的母音發音與 'tea' 相同？",
-                    "options": [
-                              "bee",
-                              "bed",
-                              "box"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'sea' 相同？",
-                    "options": [
-                              "cat",
-                              "meat",
-                              "hat"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'read' 相同？",
-                    "options": [
-                              "red",
-                              "cup",
-                              "feed"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "哪一個單字包含 'ee' 的長母音發音？",
-                    "options": [
-                              "sleep",
-                              "step",
-                              "stop"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "哪一個單字包含 'ea' 的長母音發音？",
-                    "options": [
-                              "pencil",
-                              "peach",
-                              "pig"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'tree' 的母音發音與下列何者相同？",
-                    "options": [
-                              "get",
-                              "gun",
-                              "green"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問 'he' 的母音發音與下列何者相同？",
-                    "options": [
-                              "Pete",
-                              "hen",
-                              "hat"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "請問 'she' 的母音發音與下列何者相同？",
-                    "options": [
-                              "wet",
-                              "we",
-                              "win"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "哪一個單字包含短母音 /e/ 的發音？",
-                    "options": [
-                              "bee",
-                              "bean",
-                              "bed"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "前測聽力題：哪一個單字發音是短母音 /e/？",
-                    "options": [
-                              "pen",
-                              "pan",
-                              "pin"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "前測聽力題：哪一個單字包含短母音 /e/？",
-                    "options": [
-                              "tin",
-                              "ten",
-                              "tan"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'bike' (i_e) 相同？",
-                    "options": [
-                              "bit",
-                              "kick",
-                              "kite"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'nine' (i_e) 相同？",
-                    "options": [
-                              "line",
-                              "lip",
-                              "log"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "哪一個單字包含 /aɪ/ 的長母音？",
-                    "options": [
-                              "tin",
-                              "time",
-                              "ten"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "前測發音對比：哪一個單字是長母音 /aɪ/？",
-                    "options": [
-                              "pin",
-                              "pan",
-                              "pine"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "前測發音對比：哪一個單字是短母音 /ɪ/？",
-                    "options": [
-                              "pin",
-                              "pine",
-                              "pie"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "哪一個單字包含短母音 /ɪ/ 的發音？",
-                    "options": [
-                              "bike",
-                              "big",
-                              "bag"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'rain' (ai) 相同？",
-                    "options": [
-                              "ran",
-                              "run",
-                              "train"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'day' (ay) 相同？",
-                    "options": [
-                              "play",
-                              "pat",
-                              "pot"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'cake' (a_e) 相同？",
-                    "options": [
-                              "lock",
-                              "lake",
-                              "luck"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "哪一個單字包含 /eɪ/ 的長母音？",
-                    "options": [
-                              "wet",
-                              "wit",
-                              "wait"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "哪一個單字包含 /o/ 的長母音 (如 rose)？",
-                    "options": [
-                              "boat",
-                              "box",
-                              "boy"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'coat' (oa) 相同？",
-                    "options": [
-                              "sob",
-                              "soap",
-                              "sun"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "看到 'ow' 結尾的單字，發音通常與下列何者相同？",
-                    "options": [
-                              "now",
-                              "how",
-                              "snow"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'home' (o_e) 相同？",
-                    "options": [
-                              "bone",
-                              "bun",
-                              "ban"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "前測發音對比：哪一個單字是長母音 /o/？",
-                    "options": [
-                              "not",
-                              "note",
-                              "nut"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "前測發音對比：哪一個單字是短母音 /ɑ/？",
-                    "options": [
-                              "note",
-                              "net",
-                              "not"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'suit' (ui) 相同？",
-                    "options": [
-                              "blue",
-                              "but",
-                              "bus"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "哪一個單字的母音發音與 'glue' (ue) 相同？",
-                    "options": [
-                              "cup",
-                              "clue",
-                              "cap"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "哪一個單字包含 'u_e' 的長母音？",
-                    "options": [
-                              "cut",
-                              "cat",
-                              "cute"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "前測聽力題：哪一個單字包含 /ɔɪ/ 的發音？",
-                    "options": [
-                              "boy",
-                              "dog",
-                              "bag"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "前測發音對比：哪一個單字發音包含短母音 /ɒ/？",
-                    "options": [
-                              "hat",
-                              "hot",
-                              "hit"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "前測發音對比：哪一個單字發音包含短母音 /æ/？",
-                    "options": [
-                              "hot",
-                              "hut",
-                              "hat"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "前測首音辨識：哪一個單字是 'sh' 開頭？",
-                    "options": [
-                              "shop",
-                              "chop",
-                              "hop"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "前測首音辨識：哪一個單字是 'ch' 開頭？",
-                    "options": [
-                              "shop",
-                              "chop",
-                              "stop"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'hot coffee' 是什麼飲料？",
-                    "options": [
-                              "冰咖啡",
-                              "熱紅茶",
-                              "熱咖啡"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問 'hot tea' 是什麼飲料？",
-                    "options": [
-                              "熱茶",
-                              "冰茶",
-                              "熱牛奶"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "請問 'milk tea' 是什麼意思？",
-                    "options": [
-                              "牛奶",
-                              "奶茶",
-                              "綠茶"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'apple juice' 是什麼意思？",
-                    "options": [
-                              "柳橙汁",
-                              "葡萄汁",
-                              "蘋果汁"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問 'orange juice' 是什麼意思？",
-                    "options": [
-                              "柳橙汁",
-                              "蘋果汁",
-                              "西瓜汁"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "請問 'soda' 是指哪種飲料？",
-                    "options": [
-                              "咖啡",
-                              "汽水",
-                              "礦泉水"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'water' 是什麼意思？",
-                    "options": [
-                              "湯",
-                              "果汁",
-                              "水"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "What do you want to drink? I want some ____.",
-                    "options": [
-                              "hot coffee",
-                              "pizza",
-                              "bread"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "A: Do you like water? B: Yes, I ____.",
-                    "options": [
-                              "am",
-                              "do",
-                              "like"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "A: Do you like milk tea? B: No, I ____.",
-                    "options": [
-                              "am not",
-                              "not",
-                              "don't"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "A: ____ you like orange juice? B: Yes, I do.",
-                    "options": [
-                              "Do",
-                              "Are",
-                              "Is"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "I am thirsty. I want to drink ____.",
-                    "options": [
-                              "cake",
-                              "water",
-                              "noodles"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "It's cold outside! I want some ____.",
-                    "options": [
-                              "cold soda",
-                              "ice cream",
-                              "hot tea"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "It's a hot sunny day. I want some cold ____.",
-                    "options": [
-                              "apple juice",
-                              "hot soup",
-                              "hot coffee"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "What would you like to drink? I'd like some ____.",
-                    "options": [
-                              "noodles",
-                              "milk tea",
-                              "fried chicken"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'orange juice' 是飲料還是食物？",
-                    "options": [
-                              "食物 (Food)",
-                              "文具 (Stationery)",
-                              "飲料 (Drink)"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問 'pizza' 是飲料還是食物？",
-                    "options": [
-                              "食物 (Food)",
-                              "飲料 (Drink)"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "請問 'hot coffee' 是飲料還是食物？",
-                    "options": [
-                              "食物 (Food)",
-                              "飲料 (Drink)"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'cake' 是飲料還是食物？",
-                    "options": [
-                              "飲料 (Drink)",
-                              "衣服 (Clothes)",
-                              "食物 (Food)"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問 'bread' 是飲料還是食物？",
-                    "options": [
-                              "食物 (Food)",
-                              "飲料 (Drink)"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "Welcome to JJ Juice Bar! What do you want? I want some ____.",
-                    "options": [
-                              "a book",
-                              "orange juice",
-                              "a pencil"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "A: Do you like pizza? B: Yes, I ____.",
-                    "options": [
-                              "can",
-                              "am",
-                              "do"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "A: Do you like cake? B: No, I ____.",
-                    "options": [
-                              "don't",
-                              "can't",
-                              "am not"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "I am hungry. I want some ____.",
-                    "options": [
-                              "water",
-                              "pizza",
-                              "soda"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "I am thirsty. I don't want food, I want ____.",
-                    "options": [
-                              "bread",
-                              "cake",
-                              "milk"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "Would you like some milk? Yes, ____.",
-                    "options": [
-                              "please",
-                              "thank",
-                              "you"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "Would you like some hot tea? No, ____.",
-                    "options": [
-                              "please",
-                              "thank you",
-                              "you welcome"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "What does your brother want to drink? He wants some ____.",
-                    "options": [
-                              "hamburgers",
-                              "cookies",
-                              "apple juice"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "How much is the soda? It's thirty ____.",
-                    "options": [
-                              "dollars",
-                              "books",
-                              "pencils"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "Can I have some water, please? Here you ____.",
-                    "options": [
-                              "is",
-                              "are",
-                              "am"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "'Drink' 的中文意思是？",
-                    "options": [
-                              "食物 / 吃",
-                              "玩具 / 玩",
-                              "飲料 / 喝"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "'Food' 的中文意思是？",
-                    "options": [
-                              "食物",
-                              "飲料",
-                              "水果"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "A: What do you want? B: I ____ some milk tea.",
-                    "options": [
-                              "wants",
-                              "want",
-                              "wanting"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "She likes ____. It's sweet and cold.",
-                    "options": [
-                              "hot coffee",
-                              "soup",
-                              "ice cream"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "Do you like hot coffee? No, I don't. I like ____.",
-                    "options": [
-                              "hot chocolate",
-                              "hot coffee",
-                              "black coffee"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "A: ____ is the book? B: It's on the desk.",
-                    "options": [
-                              "What",
-                              "Where",
-                              "Who"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "A: Where is the pencil? B: It is ____ the chair.",
-                    "options": [
-                              "at",
-                              "on to",
-                              "under"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "I ____ swim, but I can't dance.",
-                    "options": [
-                              "can",
-                              "am",
-                              "can't"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "A: Can you dance? B: No, I ____.",
-                    "options": [
-                              "am not",
-                              "can't",
-                              "don't"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "A: Can you ride a bike? B: Yes, I ____.",
-                    "options": [
-                              "do",
-                              "am",
-                              "can"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "A: Are you a student? B: Yes, I ____.",
-                    "options": [
-                              "am",
-                              "is",
-                              "are"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "A: Are you hungry? B: Yes, I am. I want some ____.",
-                    "options": [
-                              "pencils",
-                              "noodles",
-                              "books"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "A: Are you thirsty? B: Yes, I am. I want some ____.",
-                    "options": [
-                              "bread",
-                              "pizza",
-                              "water"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "A: ____ are you doing? B: I am reading.",
-                    "options": [
-                              "What",
-                              "Where",
-                              "Who"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "A: What are you doing? B: I am ____.",
-                    "options": [
-                              "dance",
-                              "dancing",
-                              "dances"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "Look! The boy is ____ in the kitchen.",
-                    "options": [
-                              "cook",
-                              "cooks",
-                              "cooking"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "The dog is sleeping ____ the table.",
-                    "options": [
-                              "under",
-                              "in",
-                              "on to"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "If the dog is sleeping under the table. 請問：The dog is playing a ball.",
-                    "options": [
-                              "True (正確)",
-                              "False (錯誤)"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問重組正確句子：① want ② water ③ I ④ some",
-                    "options": [
-                              "①②③④",
-                              "④③②①",
-                              "③①④② (I want some water.)"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問重組正確問句：① you ② How ③ are ④ ?",
-                    "options": [
-                              "②③①④ (How are you?)",
-                              "①②③④",
-                              "③②①④"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "請問 'doctor' (醫生) 屬於哪一類？",
-                    "options": [
-                              "動物 (Animals)",
-                              "職業 (Jobs)",
-                              "天氣 (Weather)"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'nurse' (護理師) 屬於哪一類？",
-                    "options": [
-                              "天氣 (Weather)",
-                              "動物 (Animals)",
-                              "職業 (Jobs)"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問 'tiger' (老虎) 屬於哪一類？",
-                    "options": [
-                              "動物 (Animals)",
-                              "職業 (Jobs)",
-                              "天氣 (Weather)"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "請問 'monkey' (猴子) 屬於哪一類？",
-                    "options": [
-                              "職業 (Jobs)",
-                              "動物 (Animals)",
-                              "建築 (Places)"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "請問 'cloudy' (多雲的) 屬於哪一類？",
-                    "options": [
-                              "職業 (Jobs)",
-                              "食物 (Food)",
-                              "天氣 (Weather)"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "請問 'sunny' (晴朗的) 屬於哪一類？",
-                    "options": [
-                              "天氣 (Weather)",
-                              "動物 (Animals)",
-                              "職業 (Jobs)"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "請問 'rainy' (下雨的) 屬於哪一類？",
-                    "options": [
-                              "職業 (Jobs)",
-                              "天氣 (Weather)",
-                              "食物 (Food)"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "看數字選英文：請問數字 '11' 的英文是？",
-                    "options": [
-                              "eight",
-                              "twelve",
-                              "eleven"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "看數字選英文：請問數字 '8' 的英文是？",
-                    "options": [
-                              "eight",
-                              "eighteen",
-                              "eighty"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "看數字選英文：請問數字 '15' 的英文是？",
-                    "options": [
-                              "fifty",
-                              "fifteen",
-                              "five"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "看數字選英文：請問數字 '50' 的英文是？",
-                    "options": [
-                              "fifteen",
-                              "five",
-                              "fifty"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "看到笑臉圖示 😊，對應的心情單字是？",
-                    "options": [
-                              "happy",
-                              "sad",
-                              "angry"
-                    ],
-                    "ans": 0
-          },
-          {
-                    "q": "看到哭臉圖示 😢，對應的心情單字是？",
-                    "options": [
-                              "happy",
-                              "sad",
-                              "tired"
-                    ],
-                    "ans": 1
-          },
-          {
-                    "q": "看到煮飯的地方，英文是？",
-                    "options": [
-                              "bedroom (臥室)",
-                              "bathroom (浴室)",
-                              "kitchen (廚房)"
-                    ],
-                    "ans": 2
-          },
-          {
-                    "q": "看到一隻小狗 🐶，對應的單字是？",
-                    "options": [
-                              "dog",
-                              "cat",
-                              "bear"
-                    ],
-                    "ans": 0
-          }
-];
+                  {
+                            "q": "哪一個單字的母音發音與 'tea' 相同？",
+                            "options": [
+                                      "bee",
+                                      "bed",
+                                      "box"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'sea' 相同？",
+                            "options": [
+                                      "cat",
+                                      "meat",
+                                      "hat"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字包含 'ee' 的長母音發音？",
+                            "options": [
+                                      "sleep",
+                                      "step",
+                                      "stop"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "哪一個單字包含 'ea' 的長母音發音？",
+                            "options": [
+                                      "pencil",
+                                      "peach",
+                                      "pig"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'tree' 的母音發音與下列何者相同？",
+                            "options": [
+                                      "get",
+                                      "gun",
+                                      "green"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問 'he' 的母音發音與下列何者相同？",
+                            "options": [
+                                      "Pete",
+                                      "hen",
+                                      "hat"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問 'she' 的母音發音與下列何者相同？",
+                            "options": [
+                                      "wet",
+                                      "we",
+                                      "win"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字包含短母音 /e/ 的發音？",
+                            "options": [
+                                      "bee",
+                                      "bean",
+                                      "bed"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "前測聽力題：哪一個單字發音是短母音 /e/？",
+                            "options": [
+                                      "pen",
+                                      "pan",
+                                      "pin"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "前測聽力題：哪一個單字包含短母音 /e/？",
+                            "options": [
+                                      "tin",
+                                      "ten",
+                                      "tan"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'bike' (i_e) 相同？",
+                            "options": [
+                                      "bit",
+                                      "kick",
+                                      "kite"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'nine' (i_e) 相同？",
+                            "options": [
+                                      "line",
+                                      "lip",
+                                      "log"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "哪一個單字包含 /aɪ/ 的長母音？",
+                            "options": [
+                                      "tin",
+                                      "time",
+                                      "ten"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "前測發音對比：哪一個單字是長母音 /aɪ/？",
+                            "options": [
+                                      "pin",
+                                      "pan",
+                                      "pine"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "前測發音對比：哪一個單字是短母音 /ɪ/？",
+                            "options": [
+                                      "pin",
+                                      "pine",
+                                      "pie"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "哪一個單字包含短母音 /ɪ/ 的發音？",
+                            "options": [
+                                      "bike",
+                                      "big",
+                                      "bag"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'rain' (ai) 相同？",
+                            "options": [
+                                      "ran",
+                                      "run",
+                                      "train"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'day' (ay) 相同？",
+                            "options": [
+                                      "play",
+                                      "pat",
+                                      "pot"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'cake' (a_e) 相同？",
+                            "options": [
+                                      "lock",
+                                      "lake",
+                                      "luck"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字包含 /eɪ/ 的長母音？",
+                            "options": [
+                                      "wet",
+                                      "wit",
+                                      "wait"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'coat' (oa) 相同？",
+                            "options": [
+                                      "sob",
+                                      "soap",
+                                      "sun"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'home' (o_e) 相同？",
+                            "options": [
+                                      "bone",
+                                      "bun",
+                                      "ban"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "前測發音對比：哪一個單字是長母音 /o/？",
+                            "options": [
+                                      "not",
+                                      "note",
+                                      "nut"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'suit' (ui) 相同？",
+                            "options": [
+                                      "blue",
+                                      "but",
+                                      "bus"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "哪一個單字的母音發音與 'glue' (ue) 相同？",
+                            "options": [
+                                      "cup",
+                                      "clue",
+                                      "cap"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "哪一個單字包含 'u_e' 的長母音？",
+                            "options": [
+                                      "cut",
+                                      "cat",
+                                      "cute"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "前測聽力題：哪一個單字包含 /ɔɪ/ 的發音？",
+                            "options": [
+                                      "boy",
+                                      "dog",
+                                      "bag"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "前測發音對比：哪一個單字發音包含短母音 /æ/？",
+                            "options": [
+                                      "hot",
+                                      "hut",
+                                      "hat"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "前測首音辨識：哪一個單字是 'sh' 開頭？",
+                            "options": [
+                                      "shop",
+                                      "chop",
+                                      "hop"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "前測首音辨識：哪一個單字是 'ch' 開頭？",
+                            "options": [
+                                      "shop",
+                                      "chop",
+                                      "stop"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'hot coffee' 是什麼飲料？",
+                            "options": [
+                                      "冰咖啡",
+                                      "熱紅茶",
+                                      "熱咖啡"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問 'hot tea' 是什麼飲料？",
+                            "options": [
+                                      "熱茶",
+                                      "冰茶",
+                                      "熱牛奶"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問 'milk tea' 是什麼意思？",
+                            "options": [
+                                      "牛奶",
+                                      "奶茶",
+                                      "綠茶"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'apple juice' 是什麼意思？",
+                            "options": [
+                                      "柳橙汁",
+                                      "葡萄汁",
+                                      "蘋果汁"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問 'orange juice' 是什麼意思？",
+                            "options": [
+                                      "柳橙汁",
+                                      "蘋果汁",
+                                      "西瓜汁"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問 'soda' 是指哪種飲料？",
+                            "options": [
+                                      "咖啡",
+                                      "汽水",
+                                      "礦泉水"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'water' 是什麼意思？",
+                            "options": [
+                                      "湯",
+                                      "果汁",
+                                      "水"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "What do you want to drink? I want some ____.",
+                            "options": [
+                                      "hot coffee",
+                                      "pizza",
+                                      "bread"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "A: Do you like water? B: Yes, I ____.",
+                            "options": [
+                                      "am",
+                                      "do",
+                                      "like"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "A: Do you like milk tea? B: No, I ____.",
+                            "options": [
+                                      "am not",
+                                      "not",
+                                      "don't"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "A: ____ you like orange juice? B: Yes, I do.",
+                            "options": [
+                                      "Do",
+                                      "Are",
+                                      "Is"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "I am thirsty. I want to drink ____.",
+                            "options": [
+                                      "cake",
+                                      "water",
+                                      "noodles"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "It's cold outside! I want some ____.",
+                            "options": [
+                                      "cold soda",
+                                      "ice cream",
+                                      "hot tea"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "What would you like to drink? I'd like some ____.",
+                            "options": [
+                                      "noodles",
+                                      "milk tea",
+                                      "fried chicken"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'orange juice' 是飲料還是食物？",
+                            "options": [
+                                      "食物 (Food)",
+                                      "文具 (Stationery)",
+                                      "飲料 (Drink)"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問 'pizza' 是飲料還是食物？",
+                            "options": [
+                                      "食物 (Food)",
+                                      "飲料 (Drink)"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問 'hot coffee' 是飲料還是食物？",
+                            "options": [
+                                      "食物 (Food)",
+                                      "飲料 (Drink)"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'cake' 是飲料還是食物？",
+                            "options": [
+                                      "飲料 (Drink)",
+                                      "衣服 (Clothes)",
+                                      "食物 (Food)"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問 'bread' 是飲料還是食物？",
+                            "options": [
+                                      "食物 (Food)",
+                                      "飲料 (Drink)"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "Welcome to JJ Juice Bar! What do you want? I want some ____.",
+                            "options": [
+                                      "a book",
+                                      "orange juice",
+                                      "a pencil"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "A: Do you like pizza? B: Yes, I ____.",
+                            "options": [
+                                      "can",
+                                      "am",
+                                      "do"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "A: Do you like cake? B: No, I ____.",
+                            "options": [
+                                      "don't",
+                                      "can't",
+                                      "am not"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "I am hungry. I want some ____.",
+                            "options": [
+                                      "water",
+                                      "pizza",
+                                      "soda"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "I am thirsty. I don't want food, I want ____.",
+                            "options": [
+                                      "bread",
+                                      "cake",
+                                      "milk"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "Would you like some milk? Yes, ____.",
+                            "options": [
+                                      "please",
+                                      "thank",
+                                      "you"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "Would you like some hot tea? No, ____.",
+                            "options": [
+                                      "please",
+                                      "thank you",
+                                      "you welcome"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "What does your brother want to drink? He wants some ____.",
+                            "options": [
+                                      "hamburgers",
+                                      "cookies",
+                                      "apple juice"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "How much is the soda? It's thirty ____.",
+                            "options": [
+                                      "dollars",
+                                      "books",
+                                      "pencils"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "Can I have some water, please? Here you ____.",
+                            "options": [
+                                      "is",
+                                      "are",
+                                      "am"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "'Food' 的中文意思是？",
+                            "options": [
+                                      "食物",
+                                      "飲料",
+                                      "水果"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "A: What do you want? B: I ____ some milk tea.",
+                            "options": [
+                                      "wants",
+                                      "want",
+                                      "wanting"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "She likes ____. It's sweet and cold.",
+                            "options": [
+                                      "hot coffee",
+                                      "soup",
+                                      "ice cream"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "Do you like hot coffee? No, I don't. I like ____.",
+                            "options": [
+                                      "hot chocolate",
+                                      "hot coffee",
+                                      "black coffee"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "A: ____ is the book? B: It's on the desk.",
+                            "options": [
+                                      "What",
+                                      "Where",
+                                      "Who"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "A: Where is the pencil? B: It is ____ the chair.",
+                            "options": [
+                                      "at",
+                                      "on to",
+                                      "under"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "I ____ swim, but I can't dance.",
+                            "options": [
+                                      "can",
+                                      "am",
+                                      "can't"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "A: Can you dance? B: No, I ____.",
+                            "options": [
+                                      "am not",
+                                      "can't",
+                                      "don't"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "A: Can you ride a bike? B: Yes, I ____.",
+                            "options": [
+                                      "do",
+                                      "am",
+                                      "can"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "A: Are you a student? B: Yes, I ____.",
+                            "options": [
+                                      "am",
+                                      "is",
+                                      "are"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "A: Are you hungry? B: Yes, I am. I want some ____.",
+                            "options": [
+                                      "pencils",
+                                      "noodles",
+                                      "books"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "A: Are you thirsty? B: Yes, I am. I want some ____.",
+                            "options": [
+                                      "bread",
+                                      "pizza",
+                                      "water"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "A: ____ are you doing? B: I am reading.",
+                            "options": [
+                                      "What",
+                                      "Where",
+                                      "Who"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "A: What are you doing? B: I am ____.",
+                            "options": [
+                                      "dance",
+                                      "dancing",
+                                      "dances"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "Look! The boy is ____ in the kitchen.",
+                            "options": [
+                                      "cook",
+                                      "cooks",
+                                      "cooking"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "The dog is sleeping ____ the table.",
+                            "options": [
+                                      "under",
+                                      "in",
+                                      "on to"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問重組正確句子：① want ② water ③ I ④ some",
+                            "options": [
+                                      "①②③④",
+                                      "④③②①",
+                                      "③①④② (I want some water.)"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問重組正確問句：① you ② How ③ are ④ ?",
+                            "options": [
+                                      "②③①④ (How are you?)",
+                                      "①②③④",
+                                      "③②①④"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問 'doctor' (醫生) 屬於哪一類？",
+                            "options": [
+                                      "動物 (Animals)",
+                                      "職業 (Jobs)",
+                                      "天氣 (Weather)"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'nurse' (護理師) 屬於哪一類？",
+                            "options": [
+                                      "天氣 (Weather)",
+                                      "動物 (Animals)",
+                                      "職業 (Jobs)"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問 'tiger' (老虎) 屬於哪一類？",
+                            "options": [
+                                      "動物 (Animals)",
+                                      "職業 (Jobs)",
+                                      "天氣 (Weather)"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問 'monkey' (猴子) 屬於哪一類？",
+                            "options": [
+                                      "職業 (Jobs)",
+                                      "動物 (Animals)",
+                                      "建築 (Places)"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "請問 'cloudy' (多雲的) 屬於哪一類？",
+                            "options": [
+                                      "職業 (Jobs)",
+                                      "食物 (Food)",
+                                      "天氣 (Weather)"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "請問 'sunny' (晴朗的) 屬於哪一類？",
+                            "options": [
+                                      "天氣 (Weather)",
+                                      "動物 (Animals)",
+                                      "職業 (Jobs)"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "請問 'rainy' (下雨的) 屬於哪一類？",
+                            "options": [
+                                      "職業 (Jobs)",
+                                      "天氣 (Weather)",
+                                      "食物 (Food)"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "看數字選英文：請問數字 '11' 的英文是？",
+                            "options": [
+                                      "eight",
+                                      "twelve",
+                                      "eleven"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "看數字選英文：請問數字 '8' 的英文是？",
+                            "options": [
+                                      "eight",
+                                      "eighteen",
+                                      "eighty"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "看數字選英文：請問數字 '15' 的英文是？",
+                            "options": [
+                                      "fifty",
+                                      "fifteen",
+                                      "five"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "看數字選英文：請問數字 '50' 的英文是？",
+                            "options": [
+                                      "fifteen",
+                                      "five",
+                                      "fifty"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "看到笑臉圖示 😊，對應的心情單字是？",
+                            "options": [
+                                      "happy",
+                                      "sad",
+                                      "angry"
+                            ],
+                            "ans": 0
+                  },
+                  {
+                            "q": "看到哭臉圖示 😢，對應的心情單字是？",
+                            "options": [
+                                      "happy",
+                                      "sad",
+                                      "tired"
+                            ],
+                            "ans": 1
+                  },
+                  {
+                            "q": "看到煮飯的地方，英文是？",
+                            "options": [
+                                      "bedroom (臥室)",
+                                      "bathroom (浴室)",
+                                      "kitchen (廚房)"
+                            ],
+                            "ans": 2
+                  },
+                  {
+                            "q": "看到一隻小狗 🐶，對應的單字是？",
+                            "options": [
+                                      "dog",
+                                      "cat",
+                                      "bear"
+                            ],
+                            "ans": 0
+                  }
+        ];
+
 
         /* ========================================================
            遊戲狀態變數與格子系統 (優化二：格數清楚可數，共 15 步)
