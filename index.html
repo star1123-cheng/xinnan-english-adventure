@@ -261,22 +261,50 @@
            音效與背景音樂設定 (專為 iPad Air 5 強化原生 Web Audio 解鎖)
            純合成音效與樂曲，絕不使用任何語音朗讀爆雷劇透答案！
            ======================================================== */
+        /* ========================================================
+           音效與背景音樂設定 (專為 iPad Air 5 / iOS WebKit 強化重構)
+           1. HTML5 Audio 靜音音訊橋接：強制提升音訊類別至「Playback」(與 YouTube 相同)
+              徹底克服 iPad 控制中心「靜音模式/小鈴鐺」靜音 Web Audio 的問題！
+           2. 解決 Safari WebKit 指數曲線 (ExponentialRamp) 數值 0 拋錯問題
+           3. 完善 AudioContext 非同步 resume 狀態切換
+           ======================================================== */
         let audioCtx = null;
         let isMusicPlaying = false;
         let bgmInterval = null;
         let beatCount = 0;
         let audioUnlocked = false;
+        let iosAudioBridge = null;
 
-        function initAndUnlockAudio() {
+        // 0.1 秒極短 Base64 靜音 WAV 音訊
+        const SILENT_WAV_BASE64 = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+
+        // 強制提升 iOS 音訊權限至 Playback (與 YouTube、新聞影片同等級，無視靜音開關)
+        function unlockIOSPlaybackCategory() {
+            try {
+                if (!iosAudioBridge) {
+                    iosAudioBridge = new Audio(SILENT_WAV_BASE64);
+                    iosAudioBridge.setAttribute('playsinline', '');
+                    iosAudioBridge.setAttribute('webkit-playsinline', '');
+                }
+                iosAudioBridge.play().then(() => {
+                    console.log("iOS Playback Audio Session Activated!");
+                }).catch(() => {});
+            } catch (e) {}
+        }
+
+        async function initAndUnlockAudio() {
+            unlockIOSPlaybackCategory();
             try {
                 if (!audioCtx) {
                     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContextClass) audioCtx = new AudioContextClass();
+                    if (AudioContextClass) {
+                        audioCtx = new AudioContextClass({ latencyHint: 'interactive' });
+                    }
                 }
                 if (!audioCtx) return false;
 
                 if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
+                    await audioCtx.resume();
                 }
 
                 if (!audioUnlocked) {
@@ -295,6 +323,7 @@
             }
         }
 
+        // 全域觸控即時喚醒 (相容 LINE、Chrome、Safari)
         const globalUnlock = () => {
             initAndUnlockAudio();
         };
@@ -302,40 +331,44 @@
         document.addEventListener('touchend', globalUnlock, { passive: true });
         document.addEventListener('click', globalUnlock, { passive: true });
 
-        function playTone(freq, type, duration, vol = 0.1, startTime = 0) {
+        // 原生音調合成 (全面採用 linearRampToValueAtTime 避免 Safari WebKit 拋錯)
+        function playTone(freq, type, duration, vol = 0.15, startTime = 0) {
             if (!audioCtx) initAndUnlockAudio();
-            if (!audioCtx || audioCtx.state !== 'running') return;
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
             try {
+                const now = audioCtx.currentTime;
+                const start = now + startTime;
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 
-                osc.type = type; 
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+                osc.type = type || 'sine'; 
+                osc.frequency.setValueAtTime(freq, start);
                 
-                gain.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
-                gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + startTime + 0.015); 
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration); 
+                // 起點設為 0.0001，避免 WebKit 指數或浮點數溢位
+                gain.gain.setValueAtTime(0.0001, start);
+                gain.gain.linearRampToValueAtTime(vol, start + 0.02); 
+                gain.gain.linearRampToValueAtTime(0.0001, start + duration); 
                 
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 
-                osc.start(audioCtx.currentTime + startTime);
-                osc.stop(audioCtx.currentTime + startTime + duration);
-            } catch (e) {}
+                osc.start(start);
+                osc.stop(start + duration + 0.05);
+            } catch (e) {
+                console.warn("playTone error:", e);
+            }
         }
 
-        function toggleMusic() {
-            initAndUnlockAudio(); 
+        async function toggleMusic() {
+            await initAndUnlockAudio(); 
             const btn = document.getElementById('music-toggle');
             
-            if (!audioCtx) {
-                btn.innerText = "🔇";
-                btn.classList.replace("bg-yellow-400", "bg-gray-400");
-                return;
-            }
-
             if (isMusicPlaying) {
-                clearInterval(bgmInterval);
+                if (bgmInterval) clearInterval(bgmInterval);
                 isMusicPlaying = false;
                 btn.innerText = "🔇";
                 btn.classList.replace("bg-yellow-400", "bg-gray-400");
@@ -347,69 +380,76 @@
                 btn.classList.replace("hover:bg-gray-500", "hover:bg-yellow-500");
                 
                 const sequence = [
-                    { note: 261.63, vol: 0.15 }, { note: 392.00, vol: 0.1 }, 
-                    { note: 329.63, vol: 0.12 }, { note: 392.00, vol: 0.1 },
-                    { note: 349.23, vol: 0.15 }, { note: 523.25, vol: 0.1 }, 
-                    { note: 440.00, vol: 0.12 }, { note: 523.25, vol: 0.1 },
-                    { note: 392.00, vol: 0.15 }, { note: 587.33, vol: 0.1 }, 
-                    { note: 493.88, vol: 0.12 }, { note: 587.33, vol: 0.1 },
-                    { note: 523.25, vol: 0.20 }, { note: null, vol: 0 },     
-                    { note: 392.00, vol: 0.15 }, { note: null, vol: 0 }
+                    { note: 261.63, vol: 0.18 }, { note: 392.00, vol: 0.12 }, 
+                    { note: 329.63, vol: 0.14 }, { note: 392.00, vol: 0.12 },
+                    { note: 349.23, vol: 0.18 }, { note: 523.25, vol: 0.12 }, 
+                    { note: 440.00, vol: 0.14 }, { note: 523.25, vol: 0.12 },
+                    { note: 392.00, vol: 0.18 }, { note: 587.33, vol: 0.12 }, 
+                    { note: 493.88, vol: 0.14 }, { note: 587.33, vol: 0.12 },
+                    { note: 523.25, vol: 0.22 }, { note: null, vol: 0 },     
+                    { note: 392.00, vol: 0.18 }, { note: null, vol: 0 }
                 ];
                 
                 beatCount = 0;
+                if (bgmInterval) clearInterval(bgmInterval);
                 bgmInterval = setInterval(() => {
                     try {
-                        if (!audioCtx || audioCtx.state !== 'running') return;
+                        if (!isMusicPlaying) return;
+                        if (!audioCtx) return;
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume();
+                            return;
+                        }
                         
                         const step = sequence[beatCount % sequence.length];
                         if (step.note) {
-                            playTone(step.note, 'sine', 0.3, step.vol);
-                            playTone(step.note, 'triangle', 0.2, step.vol * 0.4); 
+                            playTone(step.note, 'sine', 0.26, step.vol);
+                            playTone(step.note, 'triangle', 0.18, step.vol * 0.45); 
                         }
                         beatCount++;
                     } catch (e) {}
-                }, 180); 
+                }, 190); 
             }
         }
 
         function playSFX(type) {
-            if (!audioCtx) initAndUnlockAudio();
-            if (!audioCtx || audioCtx.state !== 'running') return;
+            initAndUnlockAudio();
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             const now = audioCtx.currentTime;
             
             try {
                 if (type === 'roll') {
                     [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-                        playTone(freq, 'sine', 0.15, 0.1, i * 0.05);
+                        playTone(freq, 'sine', 0.12, 0.14, i * 0.045);
                     });
                 } else if (type === 'correct') {
-                    playTone(783.99, 'sine', 0.15, 0.15, 0);     
-                    playTone(1046.50, 'sine', 0.4, 0.2, 0.15);   
+                    playTone(783.99, 'sine', 0.16, 0.22, 0);     
+                    playTone(1046.50, 'sine', 0.45, 0.28, 0.12);   
                 } else if (type === 'step') {
-                    playTone(587.33, 'sine', 0.08, 0.12);
+                    playTone(587.33, 'sine', 0.08, 0.18);
                 } else if (type === 'wrong') {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(349.23, now); 
-                    osc.frequency.exponentialRampToValueAtTime(174.61, now + 0.5); 
+                    osc.frequency.linearRampToValueAtTime(174.61, now + 0.45); 
                     
-                    gain.gain.setValueAtTime(0, now);
-                    gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.linearRampToValueAtTime(0.24, now + 0.04);
+                    gain.gain.linearRampToValueAtTime(0.0001, now + 0.45);
                     
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
                     osc.start(now);
-                    osc.stop(now + 0.5);
+                    osc.stop(now + 0.45);
                 } else if (type === 'win') {
-                    playTone(523.25, 'triangle', 0.15, 0.2, 0);
-                    playTone(659.25, 'triangle', 0.15, 0.2, 0.15);
-                    playTone(783.99, 'triangle', 0.15, 0.2, 0.3);
-                    playTone(1046.50, 'triangle', 0.6, 0.3, 0.45);
-                    playTone(783.99, 'triangle', 0.15, 0.2, 0.6);
-                    playTone(1046.50, 'triangle', 0.8, 0.3, 0.75);
+                    playTone(523.25, 'triangle', 0.15, 0.22, 0);
+                    playTone(659.25, 'triangle', 0.15, 0.22, 0.15);
+                    playTone(783.99, 'triangle', 0.15, 0.22, 0.3);
+                    playTone(1046.50, 'triangle', 0.6, 0.35, 0.45);
+                    playTone(783.99, 'triangle', 0.15, 0.22, 0.65);
+                    playTone(1046.50, 'triangle', 0.8, 0.35, 0.85);
                 }
             } catch(e) {}
         }
@@ -1348,10 +1388,10 @@
             });
         }
 
-        function startGame() {
+        async function startGame() {
             try {
-                const isAudioReady = initAndUnlockAudio();
-                if (isAudioReady && !isMusicPlaying) {
+                await initAndUnlockAudio();
+                if (!isMusicPlaying) {
                     toggleMusic();
                 }
             } catch (e) {
