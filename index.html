@@ -26,20 +26,20 @@
             padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
-        /* 棋子動畫：平滑位移 */
+        /* 棋子動畫：平滑逐格位移與置中彈跳 */
         .character {
-            transition: left 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: left 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
             will-change: left;
         }
 
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            50% { transform: translateY(-7px); }
         }
 
         .active-turn {
             animation: bounce 1s infinite;
-            box-shadow: 0 0 16px 5px rgba(250, 204, 21, 0.8) !important;
+            box-shadow: 0 0 14px 4px rgba(250, 204, 21, 0.85) !important;
         }
 
         .modal-overlay {
@@ -70,7 +70,7 @@
             animation: popIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
-        /* 跑道格子樣式 (優化二：格數清楚可數) */
+        /* 跑道格子樣式 (確保棋子走在格子內，不壓線) */
         .track-cell {
             flex: 1;
             height: 100%;
@@ -80,7 +80,9 @@
             align-items: center;
             border-right: 1.5px solid rgba(203, 213, 225, 0.55);
             position: relative;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
+            box-sizing: border-box;
+            min-width: 0;
         }
         .track-cell:nth-child(even) {
             background-color: rgba(255, 255, 255, 0.65);
@@ -89,7 +91,7 @@
             background-color: rgba(241, 245, 249, 0.35);
         }
         .cell-num {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             color: #94a3b8;
             line-height: 1;
@@ -172,28 +174,23 @@
 
                 <!-- Player 1 Track (紅隊跑道) -->
                 <div id="lane-p1" class="relative w-full flex-1 bg-red-50/80 border-b-2 border-red-200 flex items-center pr-10 md:pr-14 overflow-hidden">
-                    <!-- 格子背景由 JS 動態生成 15 個明確格子 (優化二) -->
+                    <!-- 格子背景由 JS 動態生成 16 個明確格子 (0 ~ 15) -->
                     <div id="grid-p1" class="absolute inset-0 flex pr-10 md:pr-14 pointer-events-none"></div>
-                    <!-- 棋子頭像 -->
-                    <div id="p1-avatar" class="character w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-red-500 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white font-bold text-base md:text-xl z-20 absolute active-turn" style="left: 0.5%;">P1</div>
-                    <!-- 右側 Goal 標籤 -->
-                    <div class="absolute right-12 md:right-16 text-red-300 font-bold text-base md:text-lg pointer-events-none">Goal</div>
+                    <!-- 棋子頭像：精準置中於格子內，絕不壓線 -->
+                    <div id="p1-avatar" class="character w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-red-500 rounded-full border-2 md:border-3 border-white shadow-md flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base z-20 absolute active-turn">P1</div>
                 </div>
 
                 <!-- Player 2 Track (藍隊跑道) -->
                 <div id="lane-p2" class="relative w-full flex-1 bg-blue-50/80 border-b-2 border-blue-200 flex items-center pr-10 md:pr-14 overflow-hidden">
                     <div id="grid-p2" class="absolute inset-0 flex pr-10 md:pr-14 pointer-events-none"></div>
-                    <div id="p2-avatar" class="character w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-blue-500 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white font-bold text-base md:text-xl z-20 absolute" style="left: 0.5%;">P2</div>
-                    <div class="absolute right-12 md:right-16 text-blue-300 font-bold text-base md:text-lg pointer-events-none">Goal</div>
+                    <div id="p2-avatar" class="character w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-blue-500 rounded-full border-2 md:border-3 border-white shadow-md flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base z-20 absolute">P2</div>
                 </div>
 
                 <!-- Player 3 Track (綠隊跑道) -->
                 <div id="lane-p3" class="relative w-full flex-1 bg-green-50/80 flex items-center pr-10 md:pr-14 overflow-hidden">
                     <div id="grid-p3" class="absolute inset-0 flex pr-10 md:pr-14 pointer-events-none"></div>
-                    <div id="p3-avatar" class="character w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-green-500 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white font-bold text-base md:text-xl z-20 absolute" style="left: 0.5%;">P3</div>
-                    <div class="absolute right-12 md:right-16 text-green-300 font-bold text-base md:text-lg pointer-events-none">Goal</div>
+                    <div id="p3-avatar" class="character w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-green-500 rounded-full border-2 md:border-3 border-white shadow-md flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base z-20 absolute">P3</div>
                 </div>
-
             </div>
 
         </div>
@@ -1518,19 +1515,31 @@
         let pendingDiceValue = 0;
         let currentQuestion = null;
         let availableQuestions = [...questionBank];
+        let missedQuestionKeys = new Set(); // 記錄本局錯過的題目（絕對不再重複出現）
+        let usedQuestionKeys = new Set();   // 記錄本局已抽過的題目
 
-        // 渲染 15 個明確的格子標記 (優化二)
+        // 渲染 16 格賽道格子：起點格(0) + 1~14步 + 終點格(15 / Goal)
         function renderTrackGrids() {
             ['grid-p1', 'grid-p2', 'grid-p3'].forEach(gridId => {
                 const container = document.getElementById(gridId);
                 if (!container) return;
                 container.replaceChildren();
-                for (let i = 0; i < totalSteps; i++) {
+                for (let i = 0; i <= totalSteps; i++) {
                     const cell = document.createElement('div');
                     cell.className = 'track-cell';
                     const span = document.createElement('span');
                     span.className = 'cell-num';
-                    span.textContent = i + 1;
+                    if (i === 0) {
+                        span.textContent = 'START';
+                        span.style.fontSize = '9px';
+                        span.style.color = '#64748b';
+                    } else if (i === totalSteps) {
+                        span.textContent = 'Goal';
+                        span.style.fontWeight = '900';
+                        span.style.color = '#f59e0b';
+                    } else {
+                        span.textContent = i;
+                    }
                     cell.appendChild(span);
                     container.appendChild(cell);
                 }
@@ -1545,6 +1554,13 @@
                 console.log("初始化音效失敗", e);
             }
 
+            // 新局初始化：重置出題與錯題紀錄，每位玩家回到起點格 (0)
+            missedQuestionKeys.clear();
+            usedQuestionKeys.clear();
+            availableQuestions = [...questionBank];
+            currentPlayerIndex = 0;
+            players.forEach(p => p.pos = 0);
+
             players[0].name = document.getElementById('p1-name').value.trim() || 'Player 1';
             players[1].name = document.getElementById('p2-name').value.trim() || 'Player 2';
             players[2].name = document.getElementById('p3-name').value.trim() || 'Player 3';
@@ -1558,7 +1574,9 @@
 
             renderTrackGrids();
             updateTurnDisplay();
-            players.forEach((_, idx) => updateAvatarPosition(idx));
+            requestAnimationFrame(() => {
+                players.forEach((_, idx) => updateAvatarPosition(idx));
+            });
         }
 
         function updateTurnDisplay() {
@@ -1611,11 +1629,28 @@
         function showQuestion() {
             const p = players[currentPlayerIndex];
             
-            if (availableQuestions.length === 0) {
-                availableQuestions = [...questionBank];
+            // 🚨 優化項目二：過濾掉本局已出過與「錯過的題目」
+            let pool = availableQuestions.filter(q => !missedQuestionKeys.has(q.q) && !usedQuestionKeys.has(q.q));
+
+            if (pool.length === 0) {
+                // 若可用題庫抽完，僅從題庫中挑選「從未錯過」且「未出過」的題目
+                pool = questionBank.filter(q => !missedQuestionKeys.has(q.q) && !usedQuestionKeys.has(q.q));
+                if (pool.length === 0) {
+                    // 若全部新題都出過（已過 100 題極限輪播），僅重置「答對過的」題目，「錯過的題目」絕對永遠不重複出現！
+                    pool = questionBank.filter(q => !missedQuestionKeys.has(q.q));
+                }
+                availableQuestions = [...pool];
             }
-            const qIndex = Math.floor(Math.random() * availableQuestions.length);
-            currentQuestion = availableQuestions.splice(qIndex, 1)[0];
+
+            const qIndex = Math.floor(Math.random() * pool.length);
+            currentQuestion = pool[qIndex];
+            
+            // 標記為本局已使用並自可用清單中移除
+            usedQuestionKeys.add(currentQuestion.q);
+            const removeIdx = availableQuestions.findIndex(q => q.q === currentQuestion.q);
+            if (removeIdx !== -1) {
+                availableQuestions.splice(removeIdx, 1);
+            }
 
             document.getElementById('question-player-name').innerText = p.name;
             document.getElementById('pending-steps').innerText = pendingDiceValue;
@@ -1656,10 +1691,13 @@
                 feedbackTitle.className = "text-4xl font-black mb-2 text-green-600";
                 feedbackMsg.innerText = `準備前進 ${pendingDiceValue} 步！`;
                 
-                // 逐格動態前進 (優化二：清楚看到走幾格)
+                // 逐格動態前進 (每步精確置中於格子內)
                 stepByStepMove(currentPlayerIndex, pendingDiceValue);
             } else {
                 playSFX('wrong'); 
+                // 🚨 優化項目二：錯過的題目永久加入本局黑名單，同一局遊戲絕對不會再重複出現！
+                missedQuestionKeys.add(currentQuestion.q);
+
                 const correctText = currentQuestion.options[currentQuestion.ans];
                 feedbackBox.className = "bg-white p-8 rounded-3xl shadow-2xl text-center transform transition-transform pop-in border-4 border-red-500";
                 feedbackIcon.innerText = "Oops!";
@@ -1674,20 +1712,31 @@
             }
         }
 
-        // 依據格數精確定位棋子 (優化二)
+        // 🚨 優化項目一：依據格子 offsetLeft 與寬度精確置中棋子，絕不落在線上面
         function updateAvatarPosition(playerIdx) {
             const p = players[playerIdx];
             const avatar = document.getElementById(`${p.id}-avatar`);
-            if (!avatar) return;
+            const grid = document.getElementById(`grid-${p.id}`);
+            if (!avatar || !grid) return;
 
-            if (p.pos === 0) {
-                avatar.style.left = '4px';
-            } else {
-                // 每格寬度為 (100% - 54px)/15，棋子精確對齊該格中心
-                const stepPercent = (p.pos / totalSteps) * 88;
-                avatar.style.left = `calc(4px + ${stepPercent}%)`;
+            // 格子索引限制在 0 ~ totalSteps (0 為起點格，15 為 Goal 格)
+            const cellIdx = Math.max(0, Math.min(totalSteps, p.pos));
+            const targetCell = grid.children[cellIdx];
+            if (targetCell) {
+                const cellLeft = targetCell.offsetLeft;
+                const cellWidth = targetCell.offsetWidth;
+                const avatarWidth = avatar.offsetWidth || 36;
+                // 將棋子水平精準置中於該格子內部：offsetLeft + (cellWidth - avatarWidth) / 2
+                // 左右兩側保留安全空隙，徹底杜絕壓在分隔線上！
+                const targetX = cellLeft + (cellWidth - avatarWidth) / 2;
+                avatar.style.left = `${Math.round(targetX)}px`;
             }
         }
+
+        // 螢幕旋轉或縮放時自動重新計算對齊格子中心
+        window.addEventListener('resize', () => {
+            players.forEach((_, idx) => updateAvatarPosition(idx));
+        });
 
         // 逐格跳步前進動畫，每走一步發出聲音，清楚看到走幾格 (優化二)
         function stepByStepMove(playerIdx, steps) {
