@@ -2,6 +2,18 @@
 
 專為國小五年級學生與班級分組學習打造的平板單機三人網頁競賽遊戲。結合了「新南國小五年級英語前測測驗」與「康軒 Wonder World 5 第一單元（The Best Drink & Phonics）」之課綱核心，內建完整 100 題優質題庫！
 
+![支援設備](https://img.shields.io/badge/iPad%20Air%205-專用優化-blue)
+![零相依套件](https://img.shields.io/badge/免安裝套件-100%25%20Offline%20Ready-success)
+![資安檢核](https://img.shields.io/badge/資安檢核-零個資%20%7C%20零%20XSS-brightgreen)
+
+---
+
+## 🚀 線上即時體驗 (Live Demo)
+
+👉 **GitHub Pages 線上暢玩**：[https://star1123-cheng.github.io/xinnan-english-adventure/](https://star1123-cheng.github.io/xinnan-english-adventure/)
+
+在 iPad Air 5 上直接以 Safari 開啟上方連結，點擊「分享」>「加入主畫面」，即可享受如同原生 App 般的無邊框全螢幕體驗！
+
 ---
 
 ## ✨ 三大核心升級與優化
@@ -27,9 +39,12 @@
 
 ---
 
-## 📱 如何在 iPad Air 5 上使用 (免佈署)
+## 🔒 資安與個資保護說明
 
-1. 將本資料夾內的 `index.html` 透過 **AirDrop** 傳送到 iPad。
-2. 使用 **Safari 瀏覽器** 開啟檔案。
-3. 點擊瀏覽器的 **「分享」>「加入主畫面」**。
-4. 從 iPad 桌面點開，享受無邊框的全螢幕 App 體驗！
+- **零個資蒐集（PII Safety）**：遊戲全程不蒐集、不上傳學生真實姓名、學號或身分證字號，僅以 `Player 1`、`Player 2`、`Player 3` 代號運作。
+- **DOM 操作零 XSS**：全數使用原生安全之 `textContent` 與受控 DOM 節點，徹底杜絕跨站腳本攻擊隱患。
+- **試卷與機敏素材隔離**：本地開發所用的學校內部試卷 PDF 與參考截圖已透過 `.gitignore` 隔離，確保校園資訊安全不外洩。
+- **純靜態託管邊界安全**：部署於 GitHub Pages 靜態空間，全面啟用 HTTPS 強制加密傳輸。
+
+---
+*Created by 祐誠老師 · 新南英語大冒險*
