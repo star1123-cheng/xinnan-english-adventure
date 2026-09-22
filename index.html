@@ -7,6 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <title>新南英語大冒險</title>
+    <!-- YouTube IFrame API 用於背景音樂循環播放 (比照拔河遊戲設計，iPad 實測發聲保證) -->
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -256,29 +258,34 @@
     <!-- 6. 浮水印標籤 (完全依照 media_1790095389276.png 像素級打造) -->
     <div class="watermark-pill">Created by 祐誠老師</div>
 
+    <!-- YouTube 背景音樂播放器（隱藏在右下角，非 0x0 避免被 iPad / WebKit 掛起或暫停，參考拔河遊戲規格） -->
+    <div id="ytBgmWrapper" style="position: fixed; bottom: 0; right: 0; width: 200px; height: 112px; opacity: 0.001; pointer-events: none; z-index: -10; overflow: hidden;">
+        <div id="ytBgmPlayer"></div>
+    </div>
+
     <script>
         /* ========================================================
-           音效與背景音樂設定 (專為 iPad Air 5 強化原生 Web Audio 解鎖)
-           純合成音效與樂曲，絕不使用任何語音朗讀爆雷劇透答案！
+           🎵 雙軌背景音樂循環播放管理器 (比照拔河遊戲設計，iPad 實測發聲保證)
+           軌道 1：YouTube 線上指定曲目循環播放 (nRy0W3jpk7Q)
+           軌道 2：本地 Web Audio 8-bit 合成戰鬥音樂 (免網路/離線自動備援)
            ======================================================== */
-        /* ========================================================
-           音效與背景音樂設定 (專為 iPad Air 5 / iOS WebKit 強化重構)
-           1. HTML5 Audio 靜音音訊橋接：強制提升音訊類別至「Playback」(與 YouTube 相同)
-              徹底克服 iPad 控制中心「靜音模式/小鈴鐺」靜音 Web Audio 的問題！
-           2. 解決 Safari WebKit 指數曲線 (ExponentialRamp) 數值 0 拋錯問題
-           3. 完善 AudioContext 非同步 resume 狀態切換
-           ======================================================== */
-        let audioCtx = null;
+        const YOUTUBE_VIDEO_ID = 'nRy0W3jpk7Q';
+        let ytPlayer = null;
+        let isYTReady = false;
+        let isYTActive = false;
         let isMusicPlaying = false;
-        let bgmInterval = null;
-        let beatCount = 0;
+        let isSynthPlaying = false;
+        let synthTimer = null;
+        let synthStep = 0;
+        let bgmVolume = 80;
+
+        let audioCtx = null;
         let audioUnlocked = false;
         let iosAudioBridge = null;
 
-        // 0.1 秒極短 Base64 靜音 WAV 音訊
+        // 0.1 秒極短 Base64 靜音 WAV 音訊 (提升 iOS 音訊會話至 Playback 級別)
         const SILENT_WAV_BASE64 = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
-        // 強制提升 iOS 音訊權限至 Playback (與 YouTube、新聞影片同等級，無視靜音開關)
         function unlockIOSPlaybackCategory() {
             try {
                 if (!iosAudioBridge) {
@@ -286,9 +293,7 @@
                     iosAudioBridge.setAttribute('playsinline', '');
                     iosAudioBridge.setAttribute('webkit-playsinline', '');
                 }
-                iosAudioBridge.play().then(() => {
-                    console.log("iOS Playback Audio Session Activated!");
-                }).catch(() => {});
+                iosAudioBridge.play().catch(() => {});
             } catch (e) {}
         }
 
@@ -323,13 +328,206 @@
             }
         }
 
-        // 全域觸控即時喚醒 (相容 LINE、Chrome、Safari)
+        // 初始化 YouTube IFrame API 播放器
+        function initYouTubePlayer() {
+            if (ytPlayer || typeof YT === 'undefined' || !YT.Player) return;
+            try {
+                ytPlayer = new YT.Player('ytBgmPlayer', {
+                    width: '200',
+                    height: '112',
+                    videoId: YOUTUBE_VIDEO_ID,
+                    playerVars: {
+                        autoplay: 1,
+                        loop: 1,
+                        playlist: YOUTUBE_VIDEO_ID, // YouTube API 要求循環播放單一影片時需指定相同 videoId
+                        controls: 0,
+                        showinfo: 0,
+                        rel: 0,
+                        disablekb: 1,
+                        fs: 0,
+                        modestbranding: 1,
+                        playsinline: 1, // 關鍵：讓 iPadOS WebKit 行內播放音訊，不跳出全螢幕播放器
+                        origin: window.location.origin && window.location.origin !== 'null' ? window.location.origin : undefined
+                    },
+                    events: {
+                        onReady: (event) => {
+                            isYTReady = true;
+                            try {
+                                event.target.unMute();
+                                event.target.setVolume(bgmVolume);
+                                if (isMusicPlaying) {
+                                    event.target.playVideo();
+                                }
+                            } catch (e) {}
+                        },
+                        onStateChange: (event) => {
+                            if (event.data === YT.PlayerState.PLAYING) {
+                                isYTActive = true;
+                                stopSynthBGM();
+                                updateMusicButtonUI(true);
+                            } else if (event.data === YT.PlayerState.ENDED && isMusicPlaying) {
+                                try {
+                                    event.target.playVideo();
+                                } catch (e) {}
+                            }
+                        },
+                        onError: (err) => {
+                            console.warn('YouTube BGM 載入略過（自動啟用 Web Audio 合成音樂備援）', err);
+                            isYTActive = false;
+                            if (isMusicPlaying) {
+                                startSynthBGM();
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.warn('YouTube Player 初始化異常，切換至備援合成音訊', e);
+                if (isMusicPlaying) startSynthBGM();
+            }
+        }
+
+        // 雙重保險監聽 YouTube API 載入時機 (支援回呼與定時輪詢)
+        if (window.YT && window.YT.Player) {
+            initYouTubePlayer();
+        } else {
+            const prevYTReady = window.onYouTubeIframeAPIReady;
+            window.onYouTubeIframeAPIReady = () => {
+                if (typeof prevYTReady === 'function') prevYTReady();
+                initYouTubePlayer();
+            };
+            let ytAttempts = 0;
+            const ytTimer = setInterval(() => {
+                ytAttempts++;
+                if (window.YT && window.YT.Player) {
+                    clearInterval(ytTimer);
+                    initYouTubePlayer();
+                } else if (ytAttempts > 30) {
+                    clearInterval(ytTimer);
+                }
+            }, 200);
+        }
+
+        // 播放背景音樂 (比照拔河遊戲，優先播放 YouTube，1.5 秒無回應啟動備援)
+        function playBGM() {
+            isMusicPlaying = true;
+            updateMusicButtonUI(true);
+
+            if (isYTReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
+                try {
+                    ytPlayer.unMute();
+                    ytPlayer.setVolume(bgmVolume);
+                    ytPlayer.playVideo();
+                } catch (e) {}
+            }
+
+            setTimeout(() => {
+                if (!isYTActive && isMusicPlaying) {
+                    startSynthBGM();
+                }
+            }, 1500);
+        }
+
+        // 暫停背景音樂
+        function pauseBGM() {
+            isMusicPlaying = false;
+            updateMusicButtonUI(false);
+            if (isYTReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                try {
+                    ytPlayer.pauseVideo();
+                } catch (e) {}
+            }
+            stopSynthBGM();
+        }
+
+        // 音樂開關按鈕控制
+        async function toggleMusic() {
+            await initAndUnlockAudio();
+            if (isMusicPlaying) {
+                pauseBGM();
+            } else {
+                playBGM();
+            }
+        }
+
+        function updateMusicButtonUI(playing) {
+            const btn = document.getElementById('music-toggle');
+            if (!btn) return;
+            if (playing) {
+                btn.innerText = "🎵";
+                btn.classList.replace("bg-gray-400", "bg-yellow-400");
+                btn.classList.replace("hover:bg-gray-500", "hover:bg-yellow-500");
+            } else {
+                btn.innerText = "🔇";
+                btn.classList.replace("bg-yellow-400", "bg-gray-400");
+                btn.classList.replace("hover:bg-yellow-500", "hover:bg-gray-500");
+            }
+        }
+
+        // 🎹 Web Audio 本地合成備援音樂
+        function startSynthBGM() {
+            if (isSynthPlaying || !isMusicPlaying) return;
+            if (!audioCtx) initAndUnlockAudio();
+            if (!audioCtx) return;
+            isSynthPlaying = true;
+            
+            const sequence = [
+                { note: 261.63, vol: 0.18 }, { note: 392.00, vol: 0.12 }, 
+                { note: 329.63, vol: 0.14 }, { note: 392.00, vol: 0.12 },
+                { note: 349.23, vol: 0.18 }, { note: 523.25, vol: 0.12 }, 
+                { note: 440.00, vol: 0.14 }, { note: 523.25, vol: 0.12 },
+                { note: 392.00, vol: 0.18 }, { note: 587.33, vol: 0.12 }, 
+                { note: 493.88, vol: 0.14 }, { note: 587.33, vol: 0.12 },
+                { note: 523.25, vol: 0.22 }, { note: null, vol: 0 },     
+                { note: 392.00, vol: 0.18 }, { note: null, vol: 0 }
+            ];
+            
+            synthStep = 0;
+            if (synthTimer) clearInterval(synthTimer);
+            synthTimer = setInterval(() => {
+                try {
+                    if (!isMusicPlaying || !isSynthPlaying) {
+                        stopSynthBGM();
+                        return;
+                    }
+                    if (!audioCtx) return;
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                        return;
+                    }
+                    
+                    const step = sequence[synthStep % sequence.length];
+                    if (step.note) {
+                        playTone(step.note, 'sine', 0.26, step.vol);
+                        playTone(step.note, 'triangle', 0.18, step.vol * 0.45); 
+                    }
+                    synthStep++;
+                } catch (e) {}
+            }, 190);
+        }
+
+        function stopSynthBGM() {
+            isSynthPlaying = false;
+            if (synthTimer) {
+                clearInterval(synthTimer);
+                synthTimer = null;
+            }
+        }
+
+        // 全域觸控即時喚醒 (相容 iPadOS Safari、Chrome、LINE)
         const globalUnlock = () => {
             initAndUnlockAudio();
+            if (isMusicPlaying && isYTReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
+                try {
+                    ytPlayer.unMute();
+                    ytPlayer.setVolume(bgmVolume);
+                    ytPlayer.playVideo();
+                } catch (e) {}
+            }
         };
         document.addEventListener('touchstart', globalUnlock, { passive: true });
         document.addEventListener('touchend', globalUnlock, { passive: true });
         document.addEventListener('click', globalUnlock, { passive: true });
+        document.addEventListener('pointerdown', globalUnlock, { passive: true });
 
         // 原生音調合成 (全面採用 linearRampToValueAtTime 避免 Safari WebKit 拋錯)
         function playTone(freq, type, duration, vol = 0.15, startTime = 0) {
@@ -360,55 +558,6 @@
                 osc.stop(start + duration + 0.05);
             } catch (e) {
                 console.warn("playTone error:", e);
-            }
-        }
-
-        async function toggleMusic() {
-            await initAndUnlockAudio(); 
-            const btn = document.getElementById('music-toggle');
-            
-            if (isMusicPlaying) {
-                if (bgmInterval) clearInterval(bgmInterval);
-                isMusicPlaying = false;
-                btn.innerText = "🔇";
-                btn.classList.replace("bg-yellow-400", "bg-gray-400");
-                btn.classList.replace("hover:bg-yellow-500", "hover:bg-gray-500");
-            } else {
-                isMusicPlaying = true;
-                btn.innerText = "🎵";
-                btn.classList.replace("bg-gray-400", "bg-yellow-400");
-                btn.classList.replace("hover:bg-gray-500", "hover:bg-yellow-500");
-                
-                const sequence = [
-                    { note: 261.63, vol: 0.18 }, { note: 392.00, vol: 0.12 }, 
-                    { note: 329.63, vol: 0.14 }, { note: 392.00, vol: 0.12 },
-                    { note: 349.23, vol: 0.18 }, { note: 523.25, vol: 0.12 }, 
-                    { note: 440.00, vol: 0.14 }, { note: 523.25, vol: 0.12 },
-                    { note: 392.00, vol: 0.18 }, { note: 587.33, vol: 0.12 }, 
-                    { note: 493.88, vol: 0.14 }, { note: 587.33, vol: 0.12 },
-                    { note: 523.25, vol: 0.22 }, { note: null, vol: 0 },     
-                    { note: 392.00, vol: 0.18 }, { note: null, vol: 0 }
-                ];
-                
-                beatCount = 0;
-                if (bgmInterval) clearInterval(bgmInterval);
-                bgmInterval = setInterval(() => {
-                    try {
-                        if (!isMusicPlaying) return;
-                        if (!audioCtx) return;
-                        if (audioCtx.state === 'suspended') {
-                            audioCtx.resume();
-                            return;
-                        }
-                        
-                        const step = sequence[beatCount % sequence.length];
-                        if (step.note) {
-                            playTone(step.note, 'sine', 0.26, step.vol);
-                            playTone(step.note, 'triangle', 0.18, step.vol * 0.45); 
-                        }
-                        beatCount++;
-                    } catch (e) {}
-                }, 190); 
             }
         }
 
@@ -1391,9 +1540,7 @@
         async function startGame() {
             try {
                 await initAndUnlockAudio();
-                if (!isMusicPlaying) {
-                    toggleMusic();
-                }
+                playBGM();
             } catch (e) {
                 console.log("初始化音效失敗", e);
             }
@@ -1513,6 +1660,7 @@
                 stepByStepMove(currentPlayerIndex, pendingDiceValue);
             } else {
                 playSFX('wrong'); 
+                const correctText = currentQuestion.options[currentQuestion.ans];
                 feedbackBox.className = "bg-white p-8 rounded-3xl shadow-2xl text-center transform transition-transform pop-in border-4 border-red-500";
                 feedbackIcon.innerText = "Oops!";
                 feedbackTitle.innerText = "答錯囉！ Try Again";
