@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>新南英語大冒險</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+            background-color: #f0f9ff;
+            background-image: radial-gradient(#bae6fd 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        /* 棋子動畫：平滑位移 */
+        .character {
+            transition: left 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: left;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .active-turn {
+            animation: bounce 1s infinite;
+            box-shadow: 0 0 16px 5px rgba(250, 204, 21, 0.8) !important;
+        }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* 骰子動畫 */
+        @keyframes rollDice {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.2); }
+            50% { transform: rotate(180deg) scale(0.85); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .rolling {
+            animation: rollDice 0.6s ease-in-out;
+        }
+
+        /* 慶祝動畫 */
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: popIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* 跑道格子樣式 (優化二：格數清楚可數) */
+        .track-cell {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            border-right: 1.5px solid rgba(203, 213, 225, 0.55);
+            position: relative;
+            padding-bottom: 3px;
+        }
+        .track-cell:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.65);
+        }
+        .track-cell:nth-child(odd) {
+            background-color: rgba(241, 245, 249, 0.35);
+        }
+        .cell-num {
+            font-size: 11px;
+            font-weight: 800;
+            color: #94a3b8;
+            line-height: 1;
+            user-select: none;
+        }
+
+        /* 浮水印形式 (完全依照 media_1790095389276.png 像素級打造) */
+        .watermark-pill {
+            position: fixed;
+            bottom: 12px;
+            left: 16px;
+            background: #111827;
+            border: 1.5px solid #374151;
+            border-radius: 9999px;
+            padding: 5px 16px;
+            color: #f9fafb;
+            font-size: 0.88rem;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+            pointer-events: none;
+            z-index: 80;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body class="min-h-[100dvh] w-full flex flex-col items-center justify-center text-gray-800">
+
+    <!-- 1. 遊戲首頁 (完全依據 messageImage_1790095247546.jpg) -->
+    <div id="start-screen" class="flex flex-col items-center justify-center w-full flex-grow p-4 md:p-8">
+        <div class="bg-white p-6 md:p-10 rounded-3xl shadow-2xl border-4 border-blue-400 text-center max-w-xl w-full pop-in overflow-y-auto max-h-full flex flex-col">
+            <h1 class="text-4xl md:text-5xl font-black text-blue-600 mb-2">新南英語大冒險</h1>
+            <p class="text-xl text-gray-500 mb-8 font-bold">五年級英語挑戰賽 (內建 100 題精選題庫)</p>
+            
+            <div class="space-y-4 mb-8 text-left">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1">玩家 1 (紅隊)</label>
+                    <input type="text" id="p1-name" value="Player 1" class="w-full px-4 py-3 border-2 border-red-300 rounded-xl focus:outline-none focus:border-red-500 text-lg text-red-600 font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1">玩家 2 (藍隊)</label>
+                    <input type="text" id="p2-name" value="Player 2" class="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:outline-none focus:border-blue-500 text-lg text-blue-600 font-bold">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1">玩家 3 (綠隊)</label>
+                    <input type="text" id="p3-name" value="Player 3" class="w-full px-4 py-3 border-2 border-green-300 rounded-xl focus:outline-none focus:border-green-500 text-lg text-green-600 font-bold">
+                </div>
+            </div>
+            
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-black text-2xl md:text-3xl py-4 px-8 rounded-2xl shadow-lg transform transition active:scale-95 mt-auto">
+                開始遊戲 START!
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. 遊戲主畫面 (依據 messageImage_1790095254684.jpg：跑道完全不留白 + 格子清楚可數) -->
+    <div id="game-screen" class="hidden flex-col w-full h-[100dvh] max-w-7xl mx-auto p-2 md:p-6 gap-2 md:gap-4">
+        
+        <!-- 標題與狀態 -->
+        <div class="flex justify-between items-center bg-white p-3 md:p-4 rounded-2xl shadow-md border-2 border-blue-200 flex-shrink-0">
+            <h2 class="text-xl md:text-2xl font-black text-blue-600 hidden sm:block">新南英語大冒險</h2>
+            <div class="text-center flex-grow">
+                <span class="text-lg md:text-xl font-bold text-gray-600">現在輪到：</span>
+                <span id="current-turn-display" class="text-2xl md:text-3xl font-black text-red-500 ml-1 md:ml-2">Player 1</span>
+            </div>
+            <button id="music-toggle" onclick="toggleMusic()" class="ml-2 bg-yellow-400 hover:bg-yellow-500 text-white w-10 h-10 md:w-12 md:h-12 rounded-full shadow-md text-xl md:text-2xl flex items-center justify-center transition-colors">
+                🎵
+            </button>
+        </div>
+
+        <!-- 賽道區：外層大卡片 -->
+        <div class="flex-grow flex flex-col justify-center bg-white p-2 md:p-5 rounded-3xl shadow-xl border-4 border-gray-200 relative overflow-hidden min-h-0 my-2">
+            
+            <!-- 賽道組合體：三條跑道直接緊密相連，彼此之間完全不留白 (優化一) -->
+            <div class="w-full flex-grow flex flex-col rounded-2xl overflow-hidden border-2 border-gray-300 shadow-sm relative">
+                
+                <!-- 終點線標示 (右側直條黃色區塊) -->
+                <div class="absolute right-0 top-0 bottom-0 w-10 md:w-14 bg-yellow-300 border-l-4 border-dashed border-gray-800 z-30 flex items-center justify-center pointer-events-none">
+                    <span style="writing-mode: vertical-rl;" class="font-black text-xl md:text-2xl text-gray-800 tracking-widest shadow-sm">FINISH</span>
+                </div>
+
+                <!-- Player 1 Track (紅隊跑道) -->
+                <div id="lane-p1" class="relative w-full flex-1 bg-red-50/80 border-b-2 border-red-200 flex items-center pr-10 md:pr-14 overflow-hidden">
+                    <!-- 格子背景由 JS 動態生成 15 個明確格子 (優化二) -->
+                    <div id="grid-p1" class="absolute inset-0 flex pr-10 md:pr-14 pointer-events-none"></div>
+                    <!-- 棋子頭像 -->
+                    <div id="p1-avatar" class="character w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-red-500 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white font-bold text-base md:text-xl z-20 absolute active-turn" style="left: 0.5%;">P1</div>
+                    <!-- 右側 Goal 標籤 -->
+                    <div class="absolute right-12 md:right-16 text-red-300 font-bold text-base md:text-lg pointer-events-none">Goal</div>
+                </div>
+
+                <!-- Player 2 Track (藍隊跑道) -->
+                <div id="lane-p2" class="relative w-full flex-1 bg-blue-50/80 border-b-2 border-blue-200 flex items-center pr-10 md:pr-14 overflow-hidden">
+                    <div id="grid-p2" class="absolute inset-0 flex pr-10 md:pr-14 pointer-events-none"></div>
+                    <div id="p2-avatar" class="character w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-blue-500 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white font-bold text-base md:text-xl z-20 absolute" style="left: 0.5%;">P2</div>
+                    <div class="absolute right-12 md:right-16 text-blue-300 font-bold text-base md:text-lg pointer-events-none">Goal</div>
+                </div>
+
+                <!-- Player 3 Track (綠隊跑道) -->
+                <div id="lane-p3" class="relative w-full flex-1 bg-green-50/80 flex items-center pr-10 md:pr-14 overflow-hidden">
+                    <div id="grid-p3" class="absolute inset-0 flex pr-10 md:pr-14 pointer-events-none"></div>
+                    <div id="p3-avatar" class="character w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-green-500 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white font-bold text-base md:text-xl z-20 absolute" style="left: 0.5%;">P3</div>
+                    <div class="absolute right-12 md:right-16 text-green-300 font-bold text-base md:text-lg pointer-events-none">Goal</div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 互動控制區 -->
+        <div class="bg-white p-3 md:p-4 rounded-2xl shadow-md border-2 border-gray-200 flex justify-center items-center gap-4 md:gap-6 flex-shrink-0">
+            <div id="dice-display" class="w-16 h-16 md:w-20 md:h-20 bg-gray-100 rounded-2xl border-4 border-gray-300 flex items-center justify-center text-3xl md:text-4xl font-black text-gray-700 shadow-inner">
+                ?
+            </div>
+            <button id="roll-btn" onclick="rollDiceAndPlay()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-black text-xl md:text-2xl py-3 md:py-4 px-6 md:px-10 rounded-2xl shadow-lg transform transition active:scale-95">
+                擲骰子抽題! (Roll)
+            </button>
+        </div>
+    </div>
+    
+    <!-- 3. 題目彈出視窗 (純文字選擇題，絕不在語音中唸出答案！) -->
+    <div id="question-modal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl border-4 md:border-8 border-indigo-400 w-full max-w-3xl overflow-hidden pop-in flex flex-col max-h-[90dvh]">
+            <div class="bg-indigo-500 text-white p-3 md:p-4 text-center flex-shrink-0">
+                <h3 class="text-xl md:text-2xl font-bold flex items-center justify-center gap-2">
+                    <span id="question-player-name" class="text-yellow-300 font-black">Player</span> 的挑戰！
+                    <span class="bg-white text-indigo-600 px-3 py-1 rounded-full text-sm md:text-base whitespace-nowrap">前進 <span id="pending-steps">0</span> 步</span>
+                </h3>
+            </div>
+            
+            <div class="p-4 md:p-8 overflow-y-auto overscroll-contain flex-1 min-h-0">
+                <p id="question-text" class="text-xl md:text-3xl font-bold text-gray-800 mb-6 md:mb-8 text-center leading-relaxed select-text">
+                    Here is the question?
+                </p>
+                
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    <!-- 按鈕由 JS 動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 答題結果回饋視窗 -->
+    <div id="feedback-modal" class="hidden fixed inset-0 modal-overlay z-[60] flex items-center justify-center p-4">
+        <div id="feedback-box" class="bg-white p-6 md:p-8 rounded-3xl shadow-2xl text-center transform transition-transform pop-in border-4 w-full max-w-sm">
+            <div id="feedback-icon" class="text-6xl md:text-7xl mb-4">✅</div>
+            <h2 id="feedback-title" class="text-3xl md:text-4xl font-black mb-2">答對了！</h2>
+            <p id="feedback-msg" class="text-lg md:text-xl text-gray-600 font-bold mb-6">前進 N 步</p>
+            <button onclick="closeFeedback()" class="bg-gray-800 hover:bg-gray-700 text-white font-bold text-lg md:text-xl py-3 px-8 rounded-xl w-full">
+                繼續 (Continue)
+            </button>
+        </div>
+    </div>
+
+    <!-- 5. 遊戲結束視窗 -->
+    <div id="winner-modal" class="hidden fixed inset-0 modal-overlay z-[70] flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-yellow-300 to-yellow-500 p-8 md:p-10 rounded-3xl shadow-2xl text-center border-4 md:border-8 border-white pop-in max-w-md w-full">
+            <div class="text-7xl md:text-8xl mb-4">🏆</div>
+            <h2 class="text-4xl md:text-5xl font-black text-white drop-shadow-md mb-2">WINNER!</h2>
+            <h3 id="winner-name" class="text-3xl md:text-4xl font-bold text-gray-800 mb-8">Player Name</h3>
+            <button onclick="location.reload()" class="bg-white text-yellow-600 font-black text-xl md:text-2xl py-4 px-8 rounded-2xl shadow-lg hover:bg-gray-100 transform transition active:scale-95 w-full">
+                再玩一次 (Play Again)
+            </button>
+        </div>
+    </div>
+
+    <!-- 6. 浮水印標籤 (完全依照 media_1790095389276.png 像素級打造) -->
+    <div class="watermark-pill">Created by 祐誠老師</div>
+
+    <script>
+        /* ========================================================
+           音效與背景音樂設定 (專為 iPad Air 5 強化原生 Web Audio 解鎖)
+           純合成音效與樂曲，絕不使用任何語音朗讀爆雷劇透答案！
+           ======================================================== */
+        let audioCtx = null;
+        let isMusicPlaying = false;
+        let bgmInterval = null;
+        let beatCount = 0;
+        let audioUnlocked = false;
+
+        function initAndUnlockAudio() {
+            try {
+                if (!audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContextClass) audioCtx = new AudioContextClass();
+                }
+                if (!audioCtx) return false;
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                if (!audioUnlocked) {
+                    const buffer = audioCtx.createBuffer(1, 1, 22050);
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioCtx.destination);
+                    if (source.start) source.start(0);
+                    else if (source.noteOn) source.noteOn(0);
+                    audioUnlocked = true;
+                }
+                return true;
+            } catch (e) {
+                console.warn("音效初始化失敗:", e);
+                return false;
+            }
+        }
+
+        const globalUnlock = () => {
+            initAndUnlockAudio();
+        };
+        document.addEventListener('touchstart', globalUnlock, { passive: true });
+        document.addEventListener('touchend', globalUnlock, { passive: true });
+        document.addEventListener('click', globalUnlock, { passive: true });
+
+        function playTone(freq, type, duration, vol = 0.1, startTime = 0) {
+            if (!audioCtx) initAndUnlockAudio();
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = type; 
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+                
+                gain.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
+                gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + startTime + 0.015); 
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration); 
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(audioCtx.currentTime + startTime);
+                osc.stop(audioCtx.currentTime + startTime + duration);
+            } catch (e) {}
+        }
+
+        function toggleMusic() {
+            initAndUnlockAudio(); 
+            const btn = document.getElementById('music-toggle');
+            
+            if (!audioCtx) {
+                btn.innerText = "🔇";
+                btn.classList.replace("bg-yellow-400", "bg-gray-400");
+                return;
+            }
+
+            if (isMusicPlaying) {
+                clearInterval(bgmInterval);
+                isMusicPlaying = false;
+                btn.innerText = "🔇";
+                btn.classList.replace("bg-yellow-400", "bg-gray-400");
+                btn.classList.replace("hover:bg-yellow-500", "hover:bg-gray-500");
+            } else {
+                isMusicPlaying = true;
+                btn.innerText = "🎵";
+                btn.classList.replace("bg-gray-400", "bg-yellow-400");
+                btn.classList.replace("hover:bg-gray-500", "hover:bg-yellow-500");
+                
+                const sequence = [
+                    { note: 261.63, vol: 0.15 }, { note: 392.00, vol: 0.1 }, 
+                    { note: 329.63, vol: 0.12 }, { note: 392.00, vol: 0.1 },
+                    { note: 349.23, vol: 0.15 }, { note: 523.25, vol: 0.1 }, 
+                    { note: 440.00, vol: 0.12 }, { note: 523.25, vol: 0.1 },
+                    { note: 392.00, vol: 0.15 }, { note: 587.33, vol: 0.1 }, 
+                    { note: 493.88, vol: 0.12 }, { note: 587.33, vol: 0.1 },
+                    { note: 523.25, vol: 0.20 }, { note: null, vol: 0 },     
+                    { note: 392.00, vol: 0.15 }, { note: null, vol: 0 }
+                ];
+                
+                beatCount = 0;
+                bgmInterval = setInterval(() => {
+                    try {
+                        if (!audioCtx || audioCtx.state !== 'running') return;
+                        
+                        const step = sequence[beatCount % sequence.length];
+                        if (step.note) {
+                            playTone(step.note, 'sine', 0.3, step.vol);
+                            playTone(step.note, 'triangle', 0.2, step.vol * 0.4); 
+                        }
+                        beatCount++;
+                    } catch (e) {}
+                }, 180); 
+            }
+        }
+
+        function playSFX(type) {
+            if (!audioCtx) initAndUnlockAudio();
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            const now = audioCtx.currentTime;
+            
+            try {
+                if (type === 'roll') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        playTone(freq, 'sine', 0.15, 0.1, i * 0.05);
+                    });
+                } else if (type === 'correct') {
+                    playTone(783.99, 'sine', 0.15, 0.15, 0);     
+                    playTone(1046.50, 'sine', 0.4, 0.2, 0.15);   
+                } else if (type === 'step') {
+                    playTone(587.33, 'sine', 0.08, 0.12);
+                } else if (type === 'wrong') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(349.23, now); 
+                    osc.frequency.exponentialRampToValueAtTime(174.61, now + 0.5); 
+                    
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'win') {
+                    playTone(523.25, 'triangle', 0.15, 0.2, 0);
+                    playTone(659.25, 'triangle', 0.15, 0.2, 0.15);
+                    playTone(783.99, 'triangle', 0.15, 0.2, 0.3);
+                    playTone(1046.50, 'triangle', 0.6, 0.3, 0.45);
+                    playTone(783.99, 'triangle', 0.15, 0.2, 0.6);
+                    playTone(1046.50, 'triangle', 0.8, 0.3, 0.75);
+                }
+            } catch(e) {}
+        }
+
+        /* ========================================================
+           優化三：100 題完整內建題庫 (依據 題庫 資料夾範圍精確打造)
+           ======================================================== */
+        const questionBank = [
+          {
+                    "q": "哪一個單字的母音發音與 'tea' 相同？",
+                    "options": [
+                              "bee",
+                              "bed",
+                              "box"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'sea' 相同？",
+                    "options": [
+                              "cat",
+                              "meat",
+                              "hat"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'read' 相同？",
+                    "options": [
+                              "red",
+                              "cup",
+                              "feed"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "哪一個單字包含 'ee' 的長母音發音？",
+                    "options": [
+                              "sleep",
+                              "step",
+                              "stop"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "哪一個單字包含 'ea' 的長母音發音？",
+                    "options": [
+                              "pencil",
+                              "peach",
+                              "pig"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'tree' 的母音發音與下列何者相同？",
+                    "options": [
+                              "get",
+                              "gun",
+                              "green"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問 'he' 的母音發音與下列何者相同？",
+                    "options": [
+                              "Pete",
+                              "hen",
+                              "hat"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "請問 'she' 的母音發音與下列何者相同？",
+                    "options": [
+                              "wet",
+                              "we",
+                              "win"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "哪一個單字包含短母音 /e/ 的發音？",
+                    "options": [
+                              "bee",
+                              "bean",
+                              "bed"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "前測聽力題：哪一個單字發音是短母音 /e/？",
+                    "options": [
+                              "pen",
+                              "pan",
+                              "pin"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "前測聽力題：哪一個單字包含短母音 /e/？",
+                    "options": [
+                              "tin",
+                              "ten",
+                              "tan"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'bike' (i_e) 相同？",
+                    "options": [
+                              "bit",
+                              "kick",
+                              "kite"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'nine' (i_e) 相同？",
+                    "options": [
+                              "line",
+                              "lip",
+                              "log"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "哪一個單字包含 /aɪ/ 的長母音？",
+                    "options": [
+                              "tin",
+                              "time",
+                              "ten"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "前測發音對比：哪一個單字是長母音 /aɪ/？",
+                    "options": [
+                              "pin",
+                              "pan",
+                              "pine"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "前測發音對比：哪一個單字是短母音 /ɪ/？",
+                    "options": [
+                              "pin",
+                              "pine",
+                              "pie"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "哪一個單字包含短母音 /ɪ/ 的發音？",
+                    "options": [
+                              "bike",
+                              "big",
+                              "bag"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'rain' (ai) 相同？",
+                    "options": [
+                              "ran",
+                              "run",
+                              "train"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'day' (ay) 相同？",
+                    "options": [
+                              "play",
+                              "pat",
+                              "pot"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'cake' (a_e) 相同？",
+                    "options": [
+                              "lock",
+                              "lake",
+                              "luck"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "哪一個單字包含 /eɪ/ 的長母音？",
+                    "options": [
+                              "wet",
+                              "wit",
+                              "wait"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "哪一個單字包含 /o/ 的長母音 (如 rose)？",
+                    "options": [
+                              "boat",
+                              "box",
+                              "boy"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'coat' (oa) 相同？",
+                    "options": [
+                              "sob",
+                              "soap",
+                              "sun"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "看到 'ow' 結尾的單字，發音通常與下列何者相同？",
+                    "options": [
+                              "now",
+                              "how",
+                              "snow"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'home' (o_e) 相同？",
+                    "options": [
+                              "bone",
+                              "bun",
+                              "ban"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "前測發音對比：哪一個單字是長母音 /o/？",
+                    "options": [
+                              "not",
+                              "note",
+                              "nut"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "前測發音對比：哪一個單字是短母音 /ɑ/？",
+                    "options": [
+                              "note",
+                              "net",
+                              "not"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'suit' (ui) 相同？",
+                    "options": [
+                              "blue",
+                              "but",
+                              "bus"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "哪一個單字的母音發音與 'glue' (ue) 相同？",
+                    "options": [
+                              "cup",
+                              "clue",
+                              "cap"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "哪一個單字包含 'u_e' 的長母音？",
+                    "options": [
+                              "cut",
+                              "cat",
+                              "cute"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "前測聽力題：哪一個單字包含 /ɔɪ/ 的發音？",
+                    "options": [
+                              "boy",
+                              "dog",
+                              "bag"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "前測發音對比：哪一個單字發音包含短母音 /ɒ/？",
+                    "options": [
+                              "hat",
+                              "hot",
+                              "hit"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "前測發音對比：哪一個單字發音包含短母音 /æ/？",
+                    "options": [
+                              "hot",
+                              "hut",
+                              "hat"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "前測首音辨識：哪一個單字是 'sh' 開頭？",
+                    "options": [
+                              "shop",
+                              "chop",
+                              "hop"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "前測首音辨識：哪一個單字是 'ch' 開頭？",
+                    "options": [
+                              "shop",
+                              "chop",
+                              "stop"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'hot coffee' 是什麼飲料？",
+                    "options": [
+                              "冰咖啡",
+                              "熱紅茶",
+                              "熱咖啡"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問 'hot tea' 是什麼飲料？",
+                    "options": [
+                              "熱茶",
+                              "冰茶",
+                              "熱牛奶"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "請問 'milk tea' 是什麼意思？",
+                    "options": [
+                              "牛奶",
+                              "奶茶",
+                              "綠茶"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'apple juice' 是什麼意思？",
+                    "options": [
+                              "柳橙汁",
+                              "葡萄汁",
+                              "蘋果汁"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問 'orange juice' 是什麼意思？",
+                    "options": [
+                              "柳橙汁",
+                              "蘋果汁",
+                              "西瓜汁"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "請問 'soda' 是指哪種飲料？",
+                    "options": [
+                              "咖啡",
+                              "汽水",
+                              "礦泉水"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'water' 是什麼意思？",
+                    "options": [
+                              "湯",
+                              "果汁",
+                              "水"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "What do you want to drink? I want some ____.",
+                    "options": [
+                              "hot coffee",
+                              "pizza",
+                              "bread"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "A: Do you like water? B: Yes, I ____.",
+                    "options": [
+                              "am",
+                              "do",
+                              "like"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "A: Do you like milk tea? B: No, I ____.",
+                    "options": [
+                              "am not",
+                              "not",
+                              "don't"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "A: ____ you like orange juice? B: Yes, I do.",
+                    "options": [
+                              "Do",
+                              "Are",
+                              "Is"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "I am thirsty. I want to drink ____.",
+                    "options": [
+                              "cake",
+                              "water",
+                              "noodles"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "It's cold outside! I want some ____.",
+                    "options": [
+                              "cold soda",
+                              "ice cream",
+                              "hot tea"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "It's a hot sunny day. I want some cold ____.",
+                    "options": [
+                              "apple juice",
+                              "hot soup",
+                              "hot coffee"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "What would you like to drink? I'd like some ____.",
+                    "options": [
+                              "noodles",
+                              "milk tea",
+                              "fried chicken"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'orange juice' 是飲料還是食物？",
+                    "options": [
+                              "食物 (Food)",
+                              "文具 (Stationery)",
+                              "飲料 (Drink)"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問 'pizza' 是飲料還是食物？",
+                    "options": [
+                              "食物 (Food)",
+                              "飲料 (Drink)"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "請問 'hot coffee' 是飲料還是食物？",
+                    "options": [
+                              "食物 (Food)",
+                              "飲料 (Drink)"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'cake' 是飲料還是食物？",
+                    "options": [
+                              "飲料 (Drink)",
+                              "衣服 (Clothes)",
+                              "食物 (Food)"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問 'bread' 是飲料還是食物？",
+                    "options": [
+                              "食物 (Food)",
+                              "飲料 (Drink)"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "Welcome to JJ Juice Bar! What do you want? I want some ____.",
+                    "options": [
+                              "a book",
+                              "orange juice",
+                              "a pencil"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "A: Do you like pizza? B: Yes, I ____.",
+                    "options": [
+                              "can",
+                              "am",
+                              "do"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "A: Do you like cake? B: No, I ____.",
+                    "options": [
+                              "don't",
+                              "can't",
+                              "am not"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "I am hungry. I want some ____.",
+                    "options": [
+                              "water",
+                              "pizza",
+                              "soda"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "I am thirsty. I don't want food, I want ____.",
+                    "options": [
+                              "bread",
+                              "cake",
+                              "milk"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "Would you like some milk? Yes, ____.",
+                    "options": [
+                              "please",
+                              "thank",
+                              "you"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "Would you like some hot tea? No, ____.",
+                    "options": [
+                              "please",
+                              "thank you",
+                              "you welcome"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "What does your brother want to drink? He wants some ____.",
+                    "options": [
+                              "hamburgers",
+                              "cookies",
+                              "apple juice"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "How much is the soda? It's thirty ____.",
+                    "options": [
+                              "dollars",
+                              "books",
+                              "pencils"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "Can I have some water, please? Here you ____.",
+                    "options": [
+                              "is",
+                              "are",
+                              "am"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "'Drink' 的中文意思是？",
+                    "options": [
+                              "食物 / 吃",
+                              "玩具 / 玩",
+                              "飲料 / 喝"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "'Food' 的中文意思是？",
+                    "options": [
+                              "食物",
+                              "飲料",
+                              "水果"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "A: What do you want? B: I ____ some milk tea.",
+                    "options": [
+                              "wants",
+                              "want",
+                              "wanting"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "She likes ____. It's sweet and cold.",
+                    "options": [
+                              "hot coffee",
+                              "soup",
+                              "ice cream"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "Do you like hot coffee? No, I don't. I like ____.",
+                    "options": [
+                              "hot chocolate",
+                              "hot coffee",
+                              "black coffee"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "A: ____ is the book? B: It's on the desk.",
+                    "options": [
+                              "What",
+                              "Where",
+                              "Who"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "A: Where is the pencil? B: It is ____ the chair.",
+                    "options": [
+                              "at",
+                              "on to",
+                              "under"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "I ____ swim, but I can't dance.",
+                    "options": [
+                              "can",
+                              "am",
+                              "can't"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "A: Can you dance? B: No, I ____.",
+                    "options": [
+                              "am not",
+                              "can't",
+                              "don't"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "A: Can you ride a bike? B: Yes, I ____.",
+                    "options": [
+                              "do",
+                              "am",
+                              "can"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "A: Are you a student? B: Yes, I ____.",
+                    "options": [
+                              "am",
+                              "is",
+                              "are"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "A: Are you hungry? B: Yes, I am. I want some ____.",
+                    "options": [
+                              "pencils",
+                              "noodles",
+                              "books"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "A: Are you thirsty? B: Yes, I am. I want some ____.",
+                    "options": [
+                              "bread",
+                              "pizza",
+                              "water"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "A: ____ are you doing? B: I am reading.",
+                    "options": [
+                              "What",
+                              "Where",
+                              "Who"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "A: What are you doing? B: I am ____.",
+                    "options": [
+                              "dance",
+                              "dancing",
+                              "dances"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "Look! The boy is ____ in the kitchen.",
+                    "options": [
+                              "cook",
+                              "cooks",
+                              "cooking"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "The dog is sleeping ____ the table.",
+                    "options": [
+                              "under",
+                              "in",
+                              "on to"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "If the dog is sleeping under the table. 請問：The dog is playing a ball.",
+                    "options": [
+                              "True (正確)",
+                              "False (錯誤)"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問重組正確句子：① want ② water ③ I ④ some",
+                    "options": [
+                              "①②③④",
+                              "④③②①",
+                              "③①④② (I want some water.)"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問重組正確問句：① you ② How ③ are ④ ?",
+                    "options": [
+                              "②③①④ (How are you?)",
+                              "①②③④",
+                              "③②①④"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "請問 'doctor' (醫生) 屬於哪一類？",
+                    "options": [
+                              "動物 (Animals)",
+                              "職業 (Jobs)",
+                              "天氣 (Weather)"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'nurse' (護理師) 屬於哪一類？",
+                    "options": [
+                              "天氣 (Weather)",
+                              "動物 (Animals)",
+                              "職業 (Jobs)"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問 'tiger' (老虎) 屬於哪一類？",
+                    "options": [
+                              "動物 (Animals)",
+                              "職業 (Jobs)",
+                              "天氣 (Weather)"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "請問 'monkey' (猴子) 屬於哪一類？",
+                    "options": [
+                              "職業 (Jobs)",
+                              "動物 (Animals)",
+                              "建築 (Places)"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "請問 'cloudy' (多雲的) 屬於哪一類？",
+                    "options": [
+                              "職業 (Jobs)",
+                              "食物 (Food)",
+                              "天氣 (Weather)"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "請問 'sunny' (晴朗的) 屬於哪一類？",
+                    "options": [
+                              "天氣 (Weather)",
+                              "動物 (Animals)",
+                              "職業 (Jobs)"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "請問 'rainy' (下雨的) 屬於哪一類？",
+                    "options": [
+                              "職業 (Jobs)",
+                              "天氣 (Weather)",
+                              "食物 (Food)"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "看數字選英文：請問數字 '11' 的英文是？",
+                    "options": [
+                              "eight",
+                              "twelve",
+                              "eleven"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "看數字選英文：請問數字 '8' 的英文是？",
+                    "options": [
+                              "eight",
+                              "eighteen",
+                              "eighty"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "看數字選英文：請問數字 '15' 的英文是？",
+                    "options": [
+                              "fifty",
+                              "fifteen",
+                              "five"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "看數字選英文：請問數字 '50' 的英文是？",
+                    "options": [
+                              "fifteen",
+                              "five",
+                              "fifty"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "看到笑臉圖示 😊，對應的心情單字是？",
+                    "options": [
+                              "happy",
+                              "sad",
+                              "angry"
+                    ],
+                    "ans": 0
+          },
+          {
+                    "q": "看到哭臉圖示 😢，對應的心情單字是？",
+                    "options": [
+                              "happy",
+                              "sad",
+                              "tired"
+                    ],
+                    "ans": 1
+          },
+          {
+                    "q": "看到煮飯的地方，英文是？",
+                    "options": [
+                              "bedroom (臥室)",
+                              "bathroom (浴室)",
+                              "kitchen (廚房)"
+                    ],
+                    "ans": 2
+          },
+          {
+                    "q": "看到一隻小狗 🐶，對應的單字是？",
+                    "options": [
+                              "dog",
+                              "cat",
+                              "bear"
+                    ],
+                    "ans": 0
+          }
+];
+
+        /* ========================================================
+           遊戲狀態變數與格子系統 (優化二：格數清楚可數，共 15 步)
+           ======================================================== */
+        const totalSteps = 15; 
+        let players = [
+            { id: 'p1', name: 'Player 1', pos: 0, color: 'text-red-500', bg: 'bg-red-500', border: 'border-red-500' },
+            { id: 'p2', name: 'Player 2', pos: 0, color: 'text-blue-500', bg: 'bg-blue-500', border: 'border-blue-500' },
+            { id: 'p3', name: 'Player 3', pos: 0, color: 'text-green-500', bg: 'bg-green-500', border: 'border-green-500' }
+        ];
+        let currentPlayerIndex = 0;
+        let pendingDiceValue = 0;
+        let currentQuestion = null;
+        let availableQuestions = [...questionBank];
+
+        // 渲染 15 個明確的格子標記 (優化二)
+        function renderTrackGrids() {
+            ['grid-p1', 'grid-p2', 'grid-p3'].forEach(gridId => {
+                const container = document.getElementById(gridId);
+                if (!container) return;
+                container.replaceChildren();
+                for (let i = 0; i < totalSteps; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'track-cell';
+                    const span = document.createElement('span');
+                    span.className = 'cell-num';
+                    span.textContent = i + 1;
+                    cell.appendChild(span);
+                    container.appendChild(cell);
+                }
+            });
+        }
+
+        function startGame() {
+            try {
+                const isAudioReady = initAndUnlockAudio();
+                if (isAudioReady && !isMusicPlaying) {
+                    toggleMusic();
+                }
+            } catch (e) {
+                console.log("初始化音效失敗", e);
+            }
+
+            players[0].name = document.getElementById('p1-name').value.trim() || 'Player 1';
+            players[1].name = document.getElementById('p2-name').value.trim() || 'Player 2';
+            players[2].name = document.getElementById('p3-name').value.trim() || 'Player 3';
+
+            document.getElementById('p1-avatar').innerText = players[0].name.substring(0, 2);
+            document.getElementById('p2-avatar').innerText = players[1].name.substring(0, 2);
+            document.getElementById('p3-avatar').innerText = players[2].name.substring(0, 2);
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+
+            renderTrackGrids();
+            updateTurnDisplay();
+            players.forEach((_, idx) => updateAvatarPosition(idx));
+        }
+
+        function updateTurnDisplay() {
+            const p = players[currentPlayerIndex];
+            const display = document.getElementById('current-turn-display');
+            display.innerText = p.name;
+            display.className = `text-2xl md:text-3xl font-black ml-1 md:ml-2 ${p.color}`;
+
+            players.forEach((player, index) => {
+                const avatar = document.getElementById(`${player.id}-avatar`);
+                if (index === currentPlayerIndex) {
+                    avatar.classList.add('active-turn');
+                } else {
+                    avatar.classList.remove('active-turn');
+                }
+            });
+
+            document.getElementById('dice-display').innerText = '?';
+            const rollBtn = document.getElementById('roll-btn');
+            rollBtn.disabled = false;
+            rollBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function rollDiceAndPlay() {
+            initAndUnlockAudio();
+            const btn = document.getElementById('roll-btn');
+            const diceDisplay = document.getElementById('dice-display');
+            
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            diceDisplay.classList.add('rolling');
+            playSFX('roll'); 
+            
+            let count = 0;
+            const rollInterval = setInterval(() => {
+                diceDisplay.innerText = Math.floor(Math.random() * 3) + 1;
+                count++;
+                if (count > 10) {
+                    clearInterval(rollInterval);
+                    diceDisplay.classList.remove('rolling');
+                    pendingDiceValue = Math.floor(Math.random() * 3) + 1; 
+                    diceDisplay.innerText = pendingDiceValue;
+                    
+                    setTimeout(showQuestion, 800);
+                }
+            }, 50);
+        }
+
+        function showQuestion() {
+            const p = players[currentPlayerIndex];
+            
+            if (availableQuestions.length === 0) {
+                availableQuestions = [...questionBank];
+            }
+            const qIndex = Math.floor(Math.random() * availableQuestions.length);
+            currentQuestion = availableQuestions.splice(qIndex, 1)[0];
+
+            document.getElementById('question-player-name').innerText = p.name;
+            document.getElementById('pending-steps').innerText = pendingDiceValue;
+            document.getElementById('question-text').innerText = currentQuestion.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.replaceChildren();
+            
+            currentQuestion.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 md:p-4 rounded-xl border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 text-lg md:text-xl font-bold text-gray-700 transition-colors shadow-sm active:bg-indigo-100";
+                btn.innerText = `${String.fromCharCode(65 + idx)}. ${opt}`;
+                btn.onclick = () => checkAnswer(idx);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('question-modal').classList.remove('hidden');
+        }
+
+        function checkAnswer(selectedIndex) {
+            initAndUnlockAudio();
+            document.getElementById('question-modal').classList.add('hidden');
+            const isCorrect = (selectedIndex === currentQuestion.ans);
+            
+            const feedbackModal = document.getElementById('feedback-modal');
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackMsg = document.getElementById('feedback-msg');
+
+            feedbackModal.classList.remove('hidden');
+
+            if (isCorrect) {
+                playSFX('correct'); 
+                feedbackBox.className = "bg-white p-8 rounded-3xl shadow-2xl text-center transform transition-transform pop-in border-4 border-green-500";
+                feedbackIcon.innerText = "🌟";
+                feedbackTitle.innerText = "答對了！ Awesome!";
+                feedbackTitle.className = "text-4xl font-black mb-2 text-green-600";
+                feedbackMsg.innerText = `準備前進 ${pendingDiceValue} 步！`;
+                
+                // 逐格動態前進 (優化二：清楚看到走幾格)
+                stepByStepMove(currentPlayerIndex, pendingDiceValue);
+            } else {
+                playSFX('wrong'); 
+                feedbackBox.className = "bg-white p-8 rounded-3xl shadow-2xl text-center transform transition-transform pop-in border-4 border-red-500";
+                feedbackIcon.innerText = "Oops!";
+                feedbackTitle.innerText = "答錯囉！ Try Again";
+                feedbackTitle.className = "text-4xl font-black mb-2 text-red-600";
+                feedbackMsg.textContent = "不要灰心！留在原地。";
+                const ansSpan = document.createElement("span");
+                ansSpan.className = "text-sm mt-2 block text-gray-500";
+                ansSpan.textContent = "正確答案是: " + correctText;
+                feedbackMsg.appendChild(document.createElement("br"));
+                feedbackMsg.appendChild(ansSpan);
+            }
+        }
+
+        // 依據格數精確定位棋子 (優化二)
+        function updateAvatarPosition(playerIdx) {
+            const p = players[playerIdx];
+            const avatar = document.getElementById(`${p.id}-avatar`);
+            if (!avatar) return;
+
+            if (p.pos === 0) {
+                avatar.style.left = '4px';
+            } else {
+                // 每格寬度為 (100% - 54px)/15，棋子精確對齊該格中心
+                const stepPercent = (p.pos / totalSteps) * 88;
+                avatar.style.left = `calc(4px + ${stepPercent}%)`;
+            }
+        }
+
+        // 逐格跳步前進動畫，每走一步發出聲音，清楚看到走幾格 (優化二)
+        function stepByStepMove(playerIdx, steps) {
+            const p = players[playerIdx];
+            const targetPos = Math.min(totalSteps, p.pos + steps);
+            
+            const stepInterval = setInterval(() => {
+                if (p.pos < targetPos) {
+                    p.pos++;
+                    updateAvatarPosition(playerIdx);
+                    playSFX('step');
+                } else {
+                    clearInterval(stepInterval);
+                }
+            }, 240);
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+            
+            if (players[currentPlayerIndex].pos >= totalSteps) {
+                showWinner(players[currentPlayerIndex]);
+                return;
+            }
+
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            updateTurnDisplay();
+        }
+
+        function showWinner(player) {
+            playSFX('win'); 
+            document.getElementById('winner-modal').classList.remove('hidden');
+            document.getElementById('winner-name').innerText = player.name;
+        }
+    </script>
+</body>
+</html>

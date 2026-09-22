@@ -1,0 +1,22 @@
+# 學校內部試卷與素材隔離
+題庫/
+*.pdf
+
+# 本地參考截圖與暫存圖片
+*.jpg
+*.jpeg
+*.png
+
+# 機敏金鑰與憑證 (Zero-Leak Policy)
+.env
+.env.*
+*.pem
+*.key
+*credentials*.json
+*serviceAccountKey*.json
+
+# 系統與建置暫存
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
